@@ -154,3 +154,50 @@ func TestDemultiplexer(t *testing.T) {
 		})
 	}
 }
+
+func TestNot16(t *testing.T) {
+	a := [16]Bit{O, I, O, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	e := [16]Bit{I, O, I, O, I, I, I, I, I, I, I, I, I, I, I, I}
+	actual := Not16(a)
+	if actual != e {
+		t.Errorf("given(%v): expected %v, actual %v", a, e, actual)
+	}
+}
+
+func TestAnd16(t *testing.T) {
+	a := [16]Bit{O, O, I, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	b := [16]Bit{O, I, O, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	e := [16]Bit{O, O, O, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	actual := And16(a, b)
+	if actual != e {
+		t.Errorf("given(%v, %v): expected %v, actual %v", a, b, e, actual)
+	}
+}
+
+func TestOr16(t *testing.T) {
+	a := [16]Bit{O, O, I, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	b := [16]Bit{O, I, O, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	e := [16]Bit{O, I, I, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	actual := Or16(a, b)
+	if actual != e {
+		t.Errorf("given(%v, %v): expected %v, actual %v", a, b, e, actual)
+	}
+}
+
+func TestMux16(t *testing.T) {
+	a := [16]Bit{O, O, I, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	b := [16]Bit{O, I, O, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	s := O
+	e := [16]Bit{O, O, I, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	actual := Mux16(a, b, s)
+	if actual != e {
+		t.Errorf("given(%v, %v,%v): expected %v, actual %v", a, b, s, e, actual)
+	}
+
+	s = I
+	e = [16]Bit{O, I, O, I, O, O, O, O, O, O, O, O, O, O, O, O}
+	actual = Mux16(a, b, s)
+	if actual != e {
+		t.Errorf("given(%v, %v,%v): expected %v, actual %v", a, b, s, e, actual)
+	}
+}
