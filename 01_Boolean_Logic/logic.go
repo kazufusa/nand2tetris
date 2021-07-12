@@ -121,3 +121,560 @@ func Mux16(a, b [16]Bit, sel Bit) [16]Bit {
 		Mux(a[15], b[15], sel),
 	}
 }
+
+func Or8Way(in [8]Bit) Bit {
+	return Or(
+		Or(
+			Or(in[0], in[1]),
+			Or(in[2], in[3]),
+		),
+		Or(
+			Or(in[4], in[5]),
+			Or(in[6], in[7]),
+		),
+	)
+}
+
+func Mux4Way16(a, b, c, d [16]Bit, sel [2]Bit) [16]Bit {
+	return [16]Bit{
+		Or(
+			Or(
+				And(a[0], And(Not(sel[0]), Not(sel[1]))),
+				And(b[0], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[0], And(Not(sel[0]), sel[1])),
+				And(d[0], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[1], And(Not(sel[0]), Not(sel[1]))),
+				And(b[1], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[1], And(Not(sel[0]), sel[1])),
+				And(d[1], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[2], And(Not(sel[0]), Not(sel[1]))),
+				And(b[2], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[2], And(Not(sel[0]), sel[1])),
+				And(d[2], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[3], And(Not(sel[0]), Not(sel[1]))),
+				And(b[3], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[3], And(Not(sel[0]), sel[1])),
+				And(d[3], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[4], And(Not(sel[0]), Not(sel[1]))),
+				And(b[4], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[4], And(Not(sel[0]), sel[1])),
+				And(d[4], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[5], And(Not(sel[0]), Not(sel[1]))),
+				And(b[5], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[5], And(Not(sel[0]), sel[1])),
+				And(d[5], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[6], And(Not(sel[0]), Not(sel[1]))),
+				And(b[6], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[6], And(Not(sel[0]), sel[1])),
+				And(d[6], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[7], And(Not(sel[0]), Not(sel[1]))),
+				And(b[7], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[7], And(Not(sel[0]), sel[1])),
+				And(d[7], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[8], And(Not(sel[0]), Not(sel[1]))),
+				And(b[8], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[8], And(Not(sel[0]), sel[1])),
+				And(d[8], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[9], And(Not(sel[0]), Not(sel[1]))),
+				And(b[9], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[9], And(Not(sel[0]), sel[1])),
+				And(d[9], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[10], And(Not(sel[0]), Not(sel[1]))),
+				And(b[10], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[10], And(Not(sel[0]), sel[1])),
+				And(d[10], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[11], And(Not(sel[0]), Not(sel[1]))),
+				And(b[11], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[11], And(Not(sel[0]), sel[1])),
+				And(d[11], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[12], And(Not(sel[0]), Not(sel[1]))),
+				And(b[12], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[12], And(Not(sel[0]), sel[1])),
+				And(d[12], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[13], And(Not(sel[0]), Not(sel[1]))),
+				And(b[13], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[13], And(Not(sel[0]), sel[1])),
+				And(d[13], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[14], And(Not(sel[0]), Not(sel[1]))),
+				And(b[14], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[14], And(Not(sel[0]), sel[1])),
+				And(d[14], And(sel[0], sel[1])),
+			),
+		),
+		Or(
+			Or(
+				And(a[15], And(Not(sel[0]), Not(sel[1]))),
+				And(b[15], And(sel[0], Not(sel[1]))),
+			),
+			Or(
+				And(c[15], And(Not(sel[0]), sel[1])),
+				And(d[15], And(sel[0], sel[1])),
+			),
+		),
+	}
+}
+
+func Mux8Way16(a, b, c, d, e, f, g, h [16]Bit, sel [3]Bit) [16]Bit {
+	return [16]Bit{
+		Or(
+			Or(
+				Or(
+					And(a[0], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[0], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[0], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[0], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[0], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[0], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[0], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[0], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[1], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[1], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[1], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[1], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[1], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[1], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[1], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[1], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[2], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[2], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[2], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[2], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[2], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[2], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[2], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[2], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[3], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[3], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[3], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[3], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[3], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[3], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[3], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[3], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[4], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[4], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[4], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[4], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[4], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[4], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[4], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[4], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[5], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[5], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[5], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[5], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[5], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[5], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[5], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[5], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[6], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[6], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[6], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[6], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[6], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[6], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[6], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[6], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[7], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[7], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[7], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[7], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[7], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[7], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[7], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[7], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[8], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[8], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[8], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[8], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[8], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[8], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[8], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[8], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[9], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[9], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[9], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[9], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[9], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[9], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[9], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[9], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[10], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[10], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[10], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[10], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[10], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[10], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[10], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[10], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[11], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[11], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[11], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[11], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[11], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[11], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[11], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[11], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[12], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[12], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[12], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[12], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[12], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[12], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[12], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[12], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[13], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[13], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[13], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[13], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[13], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[13], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[13], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[13], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[14], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[14], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[14], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[14], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[14], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[14], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[14], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[14], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+		Or(
+			Or(
+				Or(
+					And(a[15], And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+					And(b[15], And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+				),
+				Or(
+					And(c[15], And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+					And(d[15], And(And(sel[0], sel[1]), Not(sel[2]))),
+				),
+			),
+			Or(
+				Or(
+					And(e[15], And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+					And(f[15], And(And(sel[0], Not(sel[1])), sel[2])),
+				),
+				Or(
+					And(g[15], And(And(Not(sel[0]), sel[1]), sel[2])),
+					And(h[15], And(And(sel[0], sel[1]), sel[2])),
+				),
+			),
+		),
+	}
+}
+
+func Dmux4Way(in Bit, sel [2]Bit) [4]Bit {
+	return [4]Bit{
+		And(in, And(Not(sel[0]), Not(sel[1]))),
+		And(in, And(sel[0], Not(sel[1]))),
+		And(in, And(Not(sel[0]), sel[1])),
+		And(in, And(sel[0], sel[1])),
+	}
+}
+
+func Dmux8Way(in Bit, sel [3]Bit) [8]Bit {
+	return [8]Bit{
+		And(in, And(And(Not(sel[0]), Not(sel[1])), Not(sel[2]))),
+		And(in, And(And(sel[0], Not(sel[1])), Not(sel[2]))),
+		And(in, And(And(Not(sel[0]), sel[1]), Not(sel[2]))),
+		And(in, And(And(sel[0], sel[1]), Not(sel[2]))),
+		And(in, And(And(Not(sel[0]), Not(sel[1])), sel[2])),
+		And(in, And(And(sel[0], Not(sel[1])), sel[2])),
+		And(in, And(And(Not(sel[0]), sel[1]), sel[2])),
+		And(in, And(And(sel[0], sel[1]), sel[2])),
+	}
+}

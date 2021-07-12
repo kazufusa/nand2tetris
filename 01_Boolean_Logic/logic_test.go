@@ -201,3 +201,132 @@ func TestMux16(t *testing.T) {
 		t.Errorf("given(%v, %v,%v): expected %v, actual %v", a, b, s, e, actual)
 	}
 }
+
+func TestOr8Way(t *testing.T) {
+	var tests = []struct {
+		expected Bit
+		given    [8]Bit
+	}{
+		{expected: O, given: [8]Bit{0, 0, 0, 0, 0, 0, 0, 0}},
+		{expected: I, given: [8]Bit{1, 0, 0, 0, 0, 0, 0, 0}},
+		{expected: I, given: [8]Bit{0, 1, 0, 0, 0, 0, 0, 0}},
+		{expected: I, given: [8]Bit{0, 0, 1, 0, 0, 0, 0, 0}},
+		{expected: I, given: [8]Bit{0, 0, 0, 1, 0, 0, 0, 0}},
+		{expected: I, given: [8]Bit{0, 0, 0, 0, 1, 0, 0, 0}},
+		{expected: I, given: [8]Bit{0, 0, 0, 0, 0, 1, 0, 0}},
+		{expected: I, given: [8]Bit{0, 0, 0, 0, 0, 0, 1, 0}},
+		{expected: I, given: [8]Bit{0, 0, 0, 0, 0, 0, 0, 1}},
+		{expected: I, given: [8]Bit{1, 1, 1, 1, 1, 1, 1, 1}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			actual := Or8Way(tt.given)
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expected, actual)
+			}
+		})
+	}
+}
+
+func TestMux4Way16(t *testing.T) {
+	a := [16]Bit{I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I}
+	b := [16]Bit{O, O, O, O, O, O, O, O, I, I, I, I, I, I, I, I}
+	c := [16]Bit{I, I, I, I, I, I, I, I, O, O, O, O, O, O, O, O}
+	d := [16]Bit{O, O, O, O, I, I, I, I, O, O, O, O, I, I, I, I}
+	var tests = []struct {
+		expected [16]Bit
+		givenSel [2]Bit
+	}{
+		{a, [2]Bit{O, O}},
+		{b, [2]Bit{I, O}},
+		{c, [2]Bit{O, I}},
+		{d, [2]Bit{I, I}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.givenSel), func(t *testing.T) {
+			actual := Mux4Way16(a, b, c, d, tt.givenSel)
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.givenSel, tt.expected, actual)
+			}
+		})
+	}
+}
+func TestMux8Way16(t *testing.T) {
+	a := [16]Bit{I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I}
+	b := [16]Bit{O, O, O, O, O, O, O, O, I, I, I, I, I, I, I, I}
+	c := [16]Bit{I, I, I, I, I, I, I, I, O, O, O, O, O, O, O, O}
+	d := [16]Bit{O, O, O, O, I, I, I, I, O, O, O, O, I, I, I, I}
+	e := [16]Bit{I, I, I, I, O, O, O, O, I, I, I, I, O, O, O, O}
+	f := [16]Bit{O, O, I, I, O, O, I, I, O, O, I, I, O, O, I, I}
+	g := [16]Bit{I, I, O, O, I, I, O, O, I, I, O, O, I, I, O, O}
+	h := [16]Bit{O, I, O, I, O, I, O, I, O, I, O, I, O, I, O, I}
+	var tests = []struct {
+		expected [16]Bit
+		givenSel [3]Bit
+	}{
+		{a, [3]Bit{O, O, O}},
+		{b, [3]Bit{I, O, O}},
+		{c, [3]Bit{O, I, O}},
+		{d, [3]Bit{I, I, O}},
+		{e, [3]Bit{O, O, I}},
+		{f, [3]Bit{I, O, I}},
+		{g, [3]Bit{O, I, I}},
+		{h, [3]Bit{I, I, I}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.givenSel), func(t *testing.T) {
+			actual := Mux8Way16(a, b, c, d, e, f, g, h, tt.givenSel)
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.givenSel, tt.expected, actual)
+			}
+		})
+	}
+}
+
+func TestDmux4Way(t *testing.T) {
+	var tests = []struct {
+		expected [4]Bit
+		given    [2]Bit
+	}{
+		{[4]Bit{1, 0, 0, 0}, [2]Bit{O, O}},
+		{[4]Bit{0, 1, 0, 0}, [2]Bit{I, O}},
+		{[4]Bit{0, 0, 1, 0}, [2]Bit{O, I}},
+		{[4]Bit{0, 0, 0, 1}, [2]Bit{I, I}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			actual := Dmux4Way(I, tt.given)
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expected, actual)
+			}
+		})
+	}
+}
+func TestDmux8Way(t *testing.T) {
+	var tests = []struct {
+		expected [8]Bit
+		given    [3]Bit
+	}{
+		{[8]Bit{1, 0, 0, 0, 0, 0, 0, 0}, [3]Bit{O, O, O}},
+		{[8]Bit{0, 1, 0, 0, 0, 0, 0, 0}, [3]Bit{I, O, O}},
+		{[8]Bit{0, 0, 1, 0, 0, 0, 0, 0}, [3]Bit{O, I, O}},
+		{[8]Bit{0, 0, 0, 1, 0, 0, 0, 0}, [3]Bit{I, I, O}},
+		{[8]Bit{0, 0, 0, 0, 1, 0, 0, 0}, [3]Bit{O, O, I}},
+		{[8]Bit{0, 0, 0, 0, 0, 1, 0, 0}, [3]Bit{I, O, I}},
+		{[8]Bit{0, 0, 0, 0, 0, 0, 1, 0}, [3]Bit{O, I, I}},
+		{[8]Bit{0, 0, 0, 0, 0, 0, 0, 1}, [3]Bit{I, I, I}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			actual := Dmux8Way(I, tt.given)
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expected, actual)
+			}
+		})
+	}
+}
