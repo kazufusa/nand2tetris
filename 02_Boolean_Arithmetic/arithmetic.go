@@ -6,6 +6,8 @@ import (
 
 type Bit = logic.Bit
 
+type Word = [16]Bit
+
 // halfAdder adds two bits and return bits.
 func halfAdder(a, b Bit) (sum, carry Bit) {
 	return logic.Xor(a, b), logic.Not(logic.Nand(a, b))
@@ -23,8 +25,8 @@ func fullAdder(a, b, c Bit) (sum, carry Bit) {
 
 // Adder adds two n-bit numbers and return n-bit number. Adder ignores the
 // overflow bit.
-func Adder(a, b [16]Bit) [16]Bit {
-	ret := [16]Bit{}
+func Adder(a, b Word) Word {
+	ret := Word{}
 	var carry Bit
 	ret[0], carry = halfAdder(a[0], b[0])
 	ret[1], carry = fullAdder(a[1], b[1], carry)
@@ -47,7 +49,7 @@ func Adder(a, b [16]Bit) [16]Bit {
 }
 
 // Inc16 adds I to a input number. Inc16 ignores the overflow bit.
-func Inc16(in [16]Bit) [16]Bit {
+func Inc16(in Word) Word {
 	return logic.Not16(
 		Adder(
 			logic.Not16(in),
