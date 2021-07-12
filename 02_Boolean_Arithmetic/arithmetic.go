@@ -62,3 +62,44 @@ func Inc16(in Word) Word {
 		),
 	)
 }
+
+// ALU is an implementation of Hack ALU. ALU ignores the overflow bit.
+// Input:
+//  x  Word data input
+//  y  Word data input
+//  zx Zero the x input
+//  nx Negate the x input
+//  zy Zero the y input
+//  ny Negate the y input
+//  f  if f == 1 out = add(x,y) else out = and(x,y)
+//  no Negate the out output
+// Output:
+//  out Word output
+//  zr  if out==0 zr=1 else zr=0
+//  ng  if out<0 ng=1 else ng=0
+// Function:
+//  if zx z=0
+//  if nx x=!x
+//  if zy y=0
+//  if nz z=!z
+//  if f out=x+y
+//  else out=x&y
+//  if no out=!out
+//  if out==0 zr=1 else zr=0
+//  if out<0 ng=1 else ng=0
+func ALU(x, y Word, zx, nx, zy, ny, f, no Bit) (out Word, zr, ng Bit) {
+	// Zero x if zx
+	x = logic.Mux16(x, logic.And16(x, logic.Not16(x)), zx)
+	// Not x if nx
+	x = logic.Mux16(x, logic.Not16(x), nx)
+	// Zero y if zy
+	y = logic.Mux16(y, logic.And16(y, logic.Not16(y)), zy)
+	// Not y if ny
+	y = logic.Mux16(y, logic.Not16(y), ny)
+
+	// execute f
+	out = logic.Mux16(logic.And16(x, y), Adder(x, y), f)
+	// Not out if no
+	out = logic.Mux16(out, logic.Not16(out), no)
+	return
+}
