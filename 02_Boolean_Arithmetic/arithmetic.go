@@ -45,3 +45,18 @@ func Adder(a, b [16]Bit) [16]Bit {
 
 	return ret
 }
+
+// Inc16 adds I to a input number. Inc16 ignores the overflow bit.
+func Inc16(in [16]Bit) [16]Bit {
+	return logic.Not16(
+		Adder(
+			logic.Not16(in),
+			logic.Not16(
+				logic.And16(
+					in,
+					logic.Not16(in),
+				),
+			),
+		),
+	)
+}

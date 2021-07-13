@@ -95,3 +95,36 @@ func TestAdder(t *testing.T) {
 		})
 	}
 }
+
+func TestInc16(t *testing.T) {
+	var tests = []struct {
+		expected [16]Bit
+		given    [16]Bit
+	}{
+		{
+			[16]Bit{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			[16]Bit{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			[16]Bit{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			[16]Bit{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			[16]Bit{1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			[16]Bit{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			[16]Bit{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			[16]Bit{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			actual := Inc16(tt.given)
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expected, actual)
+			}
+		})
+	}
+}
