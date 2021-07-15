@@ -59,8 +59,8 @@ type Bit struct {
 	dff DFF
 }
 
-func NewBit(c *Clock) *Bit {
-	return &Bit{dff: NewDFF(c)}
+func NewBit(c *Clock) Bit {
+	return Bit{dff: NewDFF(c)}
 }
 
 // Input gets logic.Bits of load and in.
@@ -80,13 +80,13 @@ type Register struct {
 	bits [16]Bit
 }
 
-func NewRegister(c *Clock) *Register {
-	return &Register{
+func NewRegister(c *Clock) Register {
+	return Register{
 		bits: [16]Bit{
-			*NewBit(c), *NewBit(c), *NewBit(c), *NewBit(c),
-			*NewBit(c), *NewBit(c), *NewBit(c), *NewBit(c),
-			*NewBit(c), *NewBit(c), *NewBit(c), *NewBit(c),
-			*NewBit(c), *NewBit(c), *NewBit(c), *NewBit(c),
+			NewBit(c), NewBit(c), NewBit(c), NewBit(c),
+			NewBit(c), NewBit(c), NewBit(c), NewBit(c),
+			NewBit(c), NewBit(c), NewBit(c), NewBit(c),
+			NewBit(c), NewBit(c), NewBit(c), NewBit(c),
 		},
 	}
 }
