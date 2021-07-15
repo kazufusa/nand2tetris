@@ -73,3 +73,51 @@ func TestBit(t *testing.T) {
 		})
 	}
 }
+
+func TestRegister(t *testing.T) {
+	clock := NewClock()
+	register := NewRegister(clock)
+
+	register.Input(
+		logic.I,
+		Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
+	)
+	var tests = []struct {
+		name      string
+		expected  Word
+		givenLoad logic.Bit
+		givenIn   Word
+	}{
+		{"cycle 2",
+			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
+			logic.O,
+			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		},
+		{"cycle 3",
+			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
+			logic.O,
+			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		},
+		{"cycle 4",
+			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
+			logic.I,
+			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		},
+		{"cycle 5",
+			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+			logic.O,
+			Word{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			clock.Progress()
+			register.Input(tt.givenLoad, tt.givenIn)
+			actual := register.Output()
+			if actual != tt.expected {
+				t.Errorf("given(%v): expected %v, actual %v", tt.givenLoad, tt.expected, actual)
+			}
+		})
+	}
+}
