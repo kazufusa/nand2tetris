@@ -128,3 +128,35 @@ func (r8 *RAM8) Apply(in Word, load logic.Bit, addr [3]logic.Bit) Word {
 		addr,
 	)
 }
+
+// RAM64 consists of 8 RAM8
+type RAM64 struct {
+	rams [8]RAM8
+}
+
+// NewRAM64 returns new RAM64 object
+func NewRAM64(clock *Clock) RAM64 {
+	return RAM64{
+		rams: [8]RAM8{
+			NewRAM8(clock), NewRAM8(clock), NewRAM8(clock), NewRAM8(clock),
+			NewRAM8(clock), NewRAM8(clock), NewRAM8(clock), NewRAM8(clock),
+		},
+	}
+}
+
+func (r *RAM64) Apply(in Word, load logic.Bit, addr [6]logic.Bit) Word {
+	regAddr := [3]logic.Bit{addr[0], addr[1], addr[2]}
+	ram8Addr := [3]logic.Bit{addr[3], addr[4], addr[5]}
+	dAddr := logic.Dmux8Way(logic.I, ram8Addr)
+	return logic.Mux8Way16(
+		r.rams[0].Apply(in, logic.And(load, dAddr[0]), regAddr),
+		r.rams[1].Apply(in, logic.And(load, dAddr[1]), regAddr),
+		r.rams[2].Apply(in, logic.And(load, dAddr[2]), regAddr),
+		r.rams[3].Apply(in, logic.And(load, dAddr[3]), regAddr),
+		r.rams[4].Apply(in, logic.And(load, dAddr[4]), regAddr),
+		r.rams[5].Apply(in, logic.And(load, dAddr[5]), regAddr),
+		r.rams[6].Apply(in, logic.And(load, dAddr[6]), regAddr),
+		r.rams[7].Apply(in, logic.And(load, dAddr[7]), regAddr),
+		ram8Addr,
+	)
+}
