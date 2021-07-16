@@ -2,6 +2,7 @@ package memory
 
 import (
 	logic "github.com/kazufusa/nand2tetris/01_Boolean_Logic"
+	arithmetic "github.com/kazufusa/nand2tetris/02_Boolean_Arithmetic"
 )
 
 type Word [16]logic.Bit
@@ -252,5 +253,29 @@ func (r *RAM16384) Apply(in Word, load logic.Bit, addr [14]logic.Bit) Word {
 		r.rams[2].Apply(in, logic.And(load, dAddr[2]), subAddr),
 		r.rams[3].Apply(in, logic.And(load, dAddr[3]), subAddr),
 		ramAddr,
+	)
+}
+
+type PC struct {
+	register Register
+}
+
+func NewPC(clock *Clock) PC {
+	return PC{register: NewRegister(clock)}
+}
+
+func (pc *PC) Apply(in Word, load, inc, reset logic.Bit) Word {
+	return pc.register.Apply(
+		logic.Or(logic.Or(load, inc), reset),
+		logic.Mux4Way16(
+			in,
+			in, // load == 1
+			arithmetic.Inc16(pc.register.Apply(logic.O, in)), // inc == 1
+			logic.And16(in, logic.Not16(in)),                 // reset == 1
+			[2]logic.Bit{
+				logic.And(logic.Not(inc), logic.Or(load, reset)),
+				logic.And(logic.Not(load), logic.Or(inc, reset)),
+			},
+		),
 	)
 }

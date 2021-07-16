@@ -404,3 +404,99 @@ func TestRam16384(t *testing.T) {
 		break
 	}
 }
+
+func TestPC_1(t *testing.T) {
+	clock := NewClock()
+	pc := NewPC(clock)
+	w0 := Word{}
+	w1 := Word{1}
+	w2 := Word{0, 1}
+	w4 := Word{0, 0, 1}
+
+	// load
+	pc.Apply(w1, logic.I, logic.O, logic.O)
+	expected := w1
+
+	clock.Progress()
+	// increment
+	actual := pc.Apply(w4, logic.O, logic.I, logic.O)
+	if actual != expected {
+		t.Errorf("1, expected %v, actual %v", expected, actual)
+	}
+	expected = w2
+
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.O)
+	if actual != expected {
+		t.Errorf("2, expected %v, actual %v", expected, actual)
+	}
+	expected = w2
+
+	// reset
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.I)
+	if actual != expected {
+		t.Errorf("3, expected %v, actual %v", expected, actual)
+	}
+	expected = w0
+
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.O)
+	if actual != expected {
+		t.Errorf("4, expected %v, actual %v", expected, actual)
+	}
+
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.O)
+	if actual != expected {
+		t.Errorf("5, expected %v, actual %v", expected, actual)
+	}
+}
+
+func TestPC_2(t *testing.T) {
+	clock := NewClock()
+	pc := NewPC(clock)
+	w0 := Word{}
+	w1 := Word{1}
+	w2 := Word{0, 1}
+	w4 := Word{0, 0, 1}
+
+	// load
+	pc.Apply(w1, logic.I, logic.I, logic.I)
+	expected := w1
+
+	clock.Progress()
+	// increment
+	actual := pc.Apply(w4, logic.O, logic.I, logic.I)
+	if actual != expected {
+		t.Errorf("1, expected %v, actual %v", expected, actual)
+	}
+	expected = w2
+
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.O)
+	if actual != expected {
+		t.Errorf("2, expected %v, actual %v", expected, actual)
+	}
+	expected = w2
+
+	// reset
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.I)
+	if actual != expected {
+		t.Errorf("3, expected %v, actual %v", expected, actual)
+	}
+	expected = w0
+
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.O)
+	if actual != expected {
+		t.Errorf("4, expected %v, actual %v", expected, actual)
+	}
+
+	clock.Progress()
+	actual = pc.Apply(w4, logic.O, logic.O, logic.O)
+	if actual != expected {
+		t.Errorf("5, expected %v, actual %v", expected, actual)
+	}
+}
