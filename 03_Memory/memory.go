@@ -145,18 +145,112 @@ func NewRAM64(clock *Clock) RAM64 {
 }
 
 func (r *RAM64) Apply(in Word, load logic.Bit, addr [6]logic.Bit) Word {
-	regAddr := [3]logic.Bit{addr[0], addr[1], addr[2]}
-	ram8Addr := [3]logic.Bit{addr[3], addr[4], addr[5]}
-	dAddr := logic.Dmux8Way(logic.I, ram8Addr)
+	subAddr := [3]logic.Bit{addr[0], addr[1], addr[2]}
+	ramAddr := [3]logic.Bit{addr[3], addr[4], addr[5]}
+	dAddr := logic.Dmux8Way(logic.I, ramAddr)
 	return logic.Mux8Way16(
-		r.rams[0].Apply(in, logic.And(load, dAddr[0]), regAddr),
-		r.rams[1].Apply(in, logic.And(load, dAddr[1]), regAddr),
-		r.rams[2].Apply(in, logic.And(load, dAddr[2]), regAddr),
-		r.rams[3].Apply(in, logic.And(load, dAddr[3]), regAddr),
-		r.rams[4].Apply(in, logic.And(load, dAddr[4]), regAddr),
-		r.rams[5].Apply(in, logic.And(load, dAddr[5]), regAddr),
-		r.rams[6].Apply(in, logic.And(load, dAddr[6]), regAddr),
-		r.rams[7].Apply(in, logic.And(load, dAddr[7]), regAddr),
-		ram8Addr,
+		r.rams[0].Apply(in, logic.And(load, dAddr[0]), subAddr),
+		r.rams[1].Apply(in, logic.And(load, dAddr[1]), subAddr),
+		r.rams[2].Apply(in, logic.And(load, dAddr[2]), subAddr),
+		r.rams[3].Apply(in, logic.And(load, dAddr[3]), subAddr),
+		r.rams[4].Apply(in, logic.And(load, dAddr[4]), subAddr),
+		r.rams[5].Apply(in, logic.And(load, dAddr[5]), subAddr),
+		r.rams[6].Apply(in, logic.And(load, dAddr[6]), subAddr),
+		r.rams[7].Apply(in, logic.And(load, dAddr[7]), subAddr),
+		ramAddr,
+	)
+}
+
+type RAM512 struct {
+	rams [8]RAM64
+}
+
+func NewRAM512(clock *Clock) RAM512 {
+	return RAM512{
+		rams: [8]RAM64{
+			NewRAM64(clock), NewRAM64(clock), NewRAM64(clock), NewRAM64(clock),
+			NewRAM64(clock), NewRAM64(clock), NewRAM64(clock), NewRAM64(clock),
+		},
+	}
+}
+
+func (r *RAM512) Apply(in Word, load logic.Bit, addr [9]logic.Bit) Word {
+	subAddr := [6]logic.Bit{addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]}
+	ramAddr := [3]logic.Bit{addr[6], addr[7], addr[8]}
+	dAddr := logic.Dmux8Way(logic.I, ramAddr)
+	return logic.Mux8Way16(
+		r.rams[0].Apply(in, logic.And(load, dAddr[0]), subAddr),
+		r.rams[1].Apply(in, logic.And(load, dAddr[1]), subAddr),
+		r.rams[2].Apply(in, logic.And(load, dAddr[2]), subAddr),
+		r.rams[3].Apply(in, logic.And(load, dAddr[3]), subAddr),
+		r.rams[4].Apply(in, logic.And(load, dAddr[4]), subAddr),
+		r.rams[5].Apply(in, logic.And(load, dAddr[5]), subAddr),
+		r.rams[6].Apply(in, logic.And(load, dAddr[6]), subAddr),
+		r.rams[7].Apply(in, logic.And(load, dAddr[7]), subAddr),
+		ramAddr,
+	)
+}
+
+type RAM4096 struct {
+	rams [8]RAM512
+}
+
+func NewRAM4096(clock *Clock) RAM4096 {
+	return RAM4096{
+		rams: [8]RAM512{
+			NewRAM512(clock), NewRAM512(clock), NewRAM512(clock), NewRAM512(clock),
+			NewRAM512(clock), NewRAM512(clock), NewRAM512(clock), NewRAM512(clock),
+		},
+	}
+}
+
+func (r *RAM4096) Apply(in Word, load logic.Bit, addr [12]logic.Bit) Word {
+	subAddr := [9]logic.Bit{
+		addr[0], addr[1], addr[2],
+		addr[3], addr[4], addr[5],
+		addr[6], addr[7], addr[8],
+	}
+	ramAddr := [3]logic.Bit{addr[9], addr[10], addr[11]}
+	dAddr := logic.Dmux8Way(logic.I, ramAddr)
+	return logic.Mux8Way16(
+		r.rams[0].Apply(in, logic.And(load, dAddr[0]), subAddr),
+		r.rams[1].Apply(in, logic.And(load, dAddr[1]), subAddr),
+		r.rams[2].Apply(in, logic.And(load, dAddr[2]), subAddr),
+		r.rams[3].Apply(in, logic.And(load, dAddr[3]), subAddr),
+		r.rams[4].Apply(in, logic.And(load, dAddr[4]), subAddr),
+		r.rams[5].Apply(in, logic.And(load, dAddr[5]), subAddr),
+		r.rams[6].Apply(in, logic.And(load, dAddr[6]), subAddr),
+		r.rams[7].Apply(in, logic.And(load, dAddr[7]), subAddr),
+		ramAddr,
+	)
+}
+
+type RAM16384 struct {
+	rams [4]RAM4096
+}
+
+func NewRAM16384(clock *Clock) RAM16384 {
+	return RAM16384{
+		rams: [4]RAM4096{
+			NewRAM4096(clock), NewRAM4096(clock), NewRAM4096(clock), NewRAM4096(clock),
+		},
+	}
+}
+
+func (r *RAM16384) Apply(in Word, load logic.Bit, addr [14]logic.Bit) Word {
+	subAddr := [12]logic.Bit{
+		addr[0], addr[1], addr[2],
+		addr[3], addr[4], addr[5],
+		addr[6], addr[7], addr[8],
+		addr[9], addr[10], addr[11],
+	}
+	ramAddr := [2]logic.Bit{addr[12], addr[13]}
+	dAddr := logic.Dmux4Way(logic.I, ramAddr)
+	return logic.Mux4Way16(
+		r.rams[0].Apply(in, logic.And(load, dAddr[0]), subAddr),
+		r.rams[1].Apply(in, logic.And(load, dAddr[1]), subAddr),
+		r.rams[2].Apply(in, logic.And(load, dAddr[2]), subAddr),
+		r.rams[3].Apply(in, logic.And(load, dAddr[3]), subAddr),
+		ramAddr,
 	)
 }

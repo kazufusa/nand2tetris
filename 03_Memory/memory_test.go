@@ -281,3 +281,126 @@ func TestRam64(t *testing.T) {
 		break
 	}
 }
+
+func TestRam512(t *testing.T) {
+	clock := NewClock()
+	ram := NewRAM512(clock)
+	w01 := Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
+	w1 := logic.Not16(Word{})
+	var addrs [][9]logic.Bit
+	for _, addr := range makeAddrs3() {
+		addrs = append(addrs, [9]logic.Bit{0, 0, 0, 0, 0, 0, addr[0], addr[1], addr[2]})
+	}
+
+	resetRam := func(w Word) {
+		for _, addr := range addrs {
+			ram.Apply(w, logic.I, addr)
+			clock.Progress()
+		}
+	}
+
+	for _, addr := range addrs {
+		t.Run("", func(t *testing.T) {
+			resetRam(w1)
+			ram.Apply(w01, logic.I, addr)
+			clock.Progress()
+			for _, _addr := range addrs {
+				if _addr == addr {
+					actual := ram.Apply(Word{}, logic.O, _addr)
+					if actual != w01 {
+						t.Errorf("addr(%v %v): \nexpected %v, \nactual   %v", addr, _addr, w01, actual)
+					}
+				} else {
+					actual := ram.Apply(Word{}, logic.O, _addr)
+					if actual != w1 {
+						t.Errorf("addr(%v %v): \nexpected %v, \nactual   %v", addr, _addr, w1, actual)
+					}
+				}
+			}
+		})
+		break
+	}
+}
+func TestRam4096(t *testing.T) {
+	clock := NewClock()
+	ram := NewRAM4096(clock)
+	w01 := Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
+	w1 := logic.Not16(Word{})
+	var addrs [][12]logic.Bit
+	for _, addr := range makeAddrs3() {
+		addrs = append(addrs,
+			[12]logic.Bit{0, 0, 0, 0, 0, 0, 0, 0, 0, addr[0], addr[1], addr[2]},
+		)
+	}
+
+	resetRam := func(w Word) {
+		for _, addr := range addrs {
+			ram.Apply(w, logic.I, addr)
+			clock.Progress()
+		}
+	}
+
+	for _, addr := range addrs {
+		t.Run("", func(t *testing.T) {
+			resetRam(w1)
+			ram.Apply(w01, logic.I, addr)
+			clock.Progress()
+			for _, _addr := range addrs {
+				if _addr == addr {
+					actual := ram.Apply(Word{}, logic.O, _addr)
+					if actual != w01 {
+						t.Errorf("addr(%v %v): \nexpected %v, \nactual   %v", addr, _addr, w01, actual)
+					}
+				} else {
+					actual := ram.Apply(Word{}, logic.O, _addr)
+					if actual != w1 {
+						t.Errorf("addr(%v %v): \nexpected %v, \nactual   %v", addr, _addr, w1, actual)
+					}
+				}
+			}
+		})
+		break
+	}
+}
+
+func TestRam16384(t *testing.T) {
+	clock := NewClock()
+	ram := NewRAM16384(clock)
+	w01 := Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
+	w1 := logic.Not16(Word{})
+	var addrs [][14]logic.Bit
+	for _, addr := range makeAddrs3() {
+		addrs = append(addrs,
+			[14]logic.Bit{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, addr[0], addr[1], addr[2]},
+		)
+	}
+
+	resetRam := func(w Word) {
+		for _, addr := range addrs {
+			ram.Apply(w, logic.I, addr)
+			clock.Progress()
+		}
+	}
+
+	for _, addr := range addrs {
+		t.Run("", func(t *testing.T) {
+			resetRam(w1)
+			ram.Apply(w01, logic.I, addr)
+			clock.Progress()
+			for _, _addr := range addrs {
+				if _addr == addr {
+					actual := ram.Apply(Word{}, logic.O, _addr)
+					if actual != w01 {
+						t.Errorf("addr(%v %v): \nexpected %v, \nactual   %v", addr, _addr, w01, actual)
+					}
+				} else {
+					actual := ram.Apply(Word{}, logic.O, _addr)
+					if actual != w1 {
+						t.Errorf("addr(%v %v): \nexpected %v, \nactual   %v", addr, _addr, w1, actual)
+					}
+				}
+			}
+		})
+		break
+	}
+}
