@@ -29,16 +29,15 @@ func TestDFF(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run("", func(t *testing.T) {
-			dff.Input(tt.given)
 
-			actual := dff.Output()
+			actual := dff.Apply(tt.given)
 			if actual != tt.expectedBeforeProgress {
 				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expectedBeforeProgress, actual)
 			}
 
 			clock.Progress()
 
-			actual = dff.Output()
+			actual = dff.Apply(tt.given)
 			if actual != tt.expected {
 				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expected, actual)
 			}
@@ -50,7 +49,7 @@ func TestBit(t *testing.T) {
 	clock := NewClock()
 	bit := NewBit(clock)
 
-	bit.Input(logic.I, logic.I)
+	bit.Apply(logic.I, logic.I)
 	var tests = []struct {
 		name     string
 		expected logic.Bit
@@ -65,8 +64,7 @@ func TestBit(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			clock.Progress()
-			bit.Input(tt.given[0], tt.given[1])
-			actual := bit.Output()
+			actual := bit.Apply(tt.given[0], tt.given[1])
 			if actual != tt.expected {
 				t.Errorf("given(%v): expected %v, actual %v", tt.given, tt.expected, actual)
 			}
@@ -78,7 +76,7 @@ func TestRegister(t *testing.T) {
 	clock := NewClock()
 	register := NewRegister(clock)
 
-	register.Input(
+	register.Apply(
 		logic.I,
 		Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
 	)
@@ -113,10 +111,112 @@ func TestRegister(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			clock.Progress()
-			register.Input(tt.givenLoad, tt.givenIn)
-			actual := register.Output()
+			actual := register.Apply(tt.givenLoad, tt.givenIn)
 			if actual != tt.expected {
 				t.Errorf("given(%v): expected %v, actual %v", tt.givenLoad, tt.expected, actual)
+			}
+		})
+	}
+}
+
+func TestRam8_1(t *testing.T) {
+	clock := NewClock()
+	ram := NewRAM8(clock)
+	w0 := Word{}
+	w1 := logic.Not16(Word{})
+	w01 := Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
+	addrs := [][3]logic.Bit{
+		{0, 0, 0},
+		{1, 0, 0},
+		{0, 1, 0},
+		{1, 1, 0},
+		{0, 0, 1},
+		{1, 0, 1},
+		{0, 1, 1},
+		{1, 1, 1},
+	}
+
+	ram.Apply(w01, logic.I, addrs[0])
+	clock.Progress()
+	actual := ram.Apply(w0, logic.O, addrs[0])
+	if actual != w01 {
+		t.Errorf("addr(%v): expected %v, actual %v", addrs[0], w01, actual)
+	}
+
+	ram.Apply(w1, logic.I, addrs[0])
+	clock.Progress()
+	actual = ram.Apply(w0, logic.O, addrs[0])
+	if actual != w1 {
+		t.Errorf("addr(%v): expected %v, actual %v", addrs[0], w1, actual)
+	}
+
+	ram.Apply(w01, logic.I, addrs[1])
+	clock.Progress()
+	actual = ram.Apply(w0, logic.O, addrs[0])
+	if actual != w1 {
+		t.Errorf("addr(%v): expected %v, actual %v", addrs[0], w1, actual)
+	}
+	actual = ram.Apply(w0, logic.O, addrs[1])
+	if actual != w01 {
+		t.Errorf("addr(%v): expected %v, actual %v", addrs[1], w01, actual)
+	}
+
+}
+
+func TestRam8_2(t *testing.T) {
+	clock := NewClock()
+	ram := NewRAM8(clock)
+	w01 := Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}
+	w1 := logic.Not16(Word{})
+	addrs := [][3]logic.Bit{
+		{0, 0, 0},
+		{1, 0, 0},
+		{0, 1, 0},
+		{1, 1, 0},
+		{0, 0, 1},
+		{1, 0, 1},
+		{0, 1, 1},
+		{1, 1, 1},
+	}
+	resetRam := func(w Word) {
+		for i := 0; i < 8; i++ {
+			ram.Apply(w, logic.I, addrs[i])
+			clock.Progress()
+		}
+	}
+
+	var tests = []struct {
+		name     string
+		expected Word
+		addr     [3]logic.Bit
+	}{
+		{"0", w01, addrs[0]},
+		{"1", w01, addrs[1]},
+		{"2", w01, addrs[2]},
+		{"3", w01, addrs[3]},
+		{"4", w01, addrs[4]},
+		{"5", w01, addrs[5]},
+		{"6", w01, addrs[6]},
+		{"7", w01, addrs[7]},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			resetRam(w1)
+			ram.Apply(tt.expected, logic.I, tt.addr)
+			clock.Progress()
+			for _, addr := range addrs {
+				if addr == tt.addr {
+					actual := ram.Apply(Word{}, logic.O, addr)
+					if actual != tt.expected {
+						t.Errorf("addr(%v): expected %v, actual %v", addr, tt.expected, actual)
+					}
+				} else {
+					actual := ram.Apply(Word{}, logic.O, addr)
+					if actual != w1 {
+						t.Errorf("addr(%v): expected %v, actual %v", addr, w1, actual)
+					}
+				}
 			}
 		})
 	}

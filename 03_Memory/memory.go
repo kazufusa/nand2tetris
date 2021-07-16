@@ -31,28 +31,21 @@ func NewDFF(c *Clock) DFF {
 	return DFF{clock: c}
 }
 
-func (d *DFF) Input(in logic.Bit) {
+func (d *DFF) Apply(in logic.Bit) logic.Bit {
 	defer func() {
-		d.nextTime = *d.clock + 1
+		d.nextTime = d.clock.Now() + 1
 	}()
 
 	if d.nextTime == d.clock.Now() {
 		d.cur = d.next
 		d.next = in
+	} else if d.nextTime == d.clock.Now()+1 {
+		d.next = in
 	} else if d.nextTime < d.clock.Now() {
 		d.cur = logic.O
 		d.next = in
 	}
-}
-func (d *DFF) Output() logic.Bit {
-	switch d.clock.Now() {
-	case d.nextTime - 1:
-		return d.cur
-	case d.nextTime:
-		return d.next
-	default:
-		return logic.O
-	}
+	return d.cur
 }
 
 type Bit struct {
@@ -66,13 +59,8 @@ func NewBit(c *Clock) Bit {
 // Input gets logic.Bits of load and in.
 // If load, Input inputs in to DFF
 // else Input gets output from DFF and inputs the output to DFF.
-func (b *Bit) Input(load, in logic.Bit) {
-	b.dff.Input(logic.Mux(b.dff.Output(), in, load))
-}
-
-// Output returns cu
-func (b *Bit) Output() logic.Bit {
-	return b.dff.Output()
+func (b *Bit) Apply(load, in logic.Bit) logic.Bit {
+	return b.dff.Apply(logic.Mux(b.dff.Apply(logic.O), in, load))
 }
 
 // 16-bit register
@@ -91,42 +79,52 @@ func NewRegister(c *Clock) Register {
 	}
 }
 
-func (r *Register) Input(load logic.Bit, in Word) {
-	r.bits[0].Input(load, in[0])
-	r.bits[1].Input(load, in[1])
-	r.bits[2].Input(load, in[2])
-	r.bits[3].Input(load, in[3])
-	r.bits[4].Input(load, in[4])
-	r.bits[5].Input(load, in[5])
-	r.bits[6].Input(load, in[6])
-	r.bits[7].Input(load, in[7])
-	r.bits[8].Input(load, in[8])
-	r.bits[9].Input(load, in[9])
-	r.bits[10].Input(load, in[10])
-	r.bits[11].Input(load, in[11])
-	r.bits[12].Input(load, in[12])
-	r.bits[13].Input(load, in[13])
-	r.bits[14].Input(load, in[14])
-	r.bits[15].Input(load, in[15])
+func (r *Register) Apply(load logic.Bit, in Word) Word {
+	return Word{
+		r.bits[0].Apply(load, in[0]),
+		r.bits[1].Apply(load, in[1]),
+		r.bits[2].Apply(load, in[2]),
+		r.bits[3].Apply(load, in[3]),
+		r.bits[4].Apply(load, in[4]),
+		r.bits[5].Apply(load, in[5]),
+		r.bits[6].Apply(load, in[6]),
+		r.bits[7].Apply(load, in[7]),
+		r.bits[8].Apply(load, in[8]),
+		r.bits[9].Apply(load, in[9]),
+		r.bits[10].Apply(load, in[10]),
+		r.bits[11].Apply(load, in[11]),
+		r.bits[12].Apply(load, in[12]),
+		r.bits[13].Apply(load, in[13]),
+		r.bits[14].Apply(load, in[14]),
+		r.bits[15].Apply(load, in[15]),
+	}
 }
 
-func (r *Register) Output() Word {
-	return Word{
-		r.bits[0].Output(),
-		r.bits[1].Output(),
-		r.bits[2].Output(),
-		r.bits[3].Output(),
-		r.bits[4].Output(),
-		r.bits[5].Output(),
-		r.bits[6].Output(),
-		r.bits[7].Output(),
-		r.bits[8].Output(),
-		r.bits[9].Output(),
-		r.bits[10].Output(),
-		r.bits[11].Output(),
-		r.bits[12].Output(),
-		r.bits[13].Output(),
-		r.bits[14].Output(),
-		r.bits[15].Output(),
+// RAM8 consists of 8 registers
+type RAM8 struct {
+	registers [8]Register
+}
+
+func NewRAM8(clock *Clock) RAM8 {
+	return RAM8{
+		registers: [8]Register{
+			NewRegister(clock), NewRegister(clock), NewRegister(clock), NewRegister(clock),
+			NewRegister(clock), NewRegister(clock), NewRegister(clock), NewRegister(clock),
+		},
 	}
+}
+
+func (r8 *RAM8) Apply(in Word, load logic.Bit, addr [3]logic.Bit) Word {
+	dAddr := logic.Dmux8Way(logic.I, addr)
+	return logic.Mux8Way16(
+		r8.registers[0].Apply(logic.And(load, dAddr[0]), in),
+		r8.registers[1].Apply(logic.And(load, dAddr[1]), in),
+		r8.registers[2].Apply(logic.And(load, dAddr[2]), in),
+		r8.registers[3].Apply(logic.And(load, dAddr[3]), in),
+		r8.registers[4].Apply(logic.And(load, dAddr[4]), in),
+		r8.registers[5].Apply(logic.And(load, dAddr[5]), in),
+		r8.registers[6].Apply(logic.And(load, dAddr[6]), in),
+		r8.registers[7].Apply(logic.And(load, dAddr[7]), in),
+		addr,
+	)
 }
