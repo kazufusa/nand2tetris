@@ -5,7 +5,7 @@ import (
 	arithmetic "github.com/kazufusa/nand2tetris/02_Boolean_Arithmetic"
 )
 
-type Word [16]logic.Bit
+type Word = [16]logic.Bit
 
 type Clock uint8
 
@@ -264,17 +264,21 @@ func NewPC(clock *Clock) PC {
 	return PC{register: NewRegister(clock)}
 }
 
+// if reset(t)      out(t+1) = 0
+// else if load(t)  out(t+1) = in(t)
+// else if inc(t)   out(t+1) = in(t) + 1
+// else             out(t+1) = in(t)
 func (pc *PC) Apply(in Word, load, inc, reset logic.Bit) Word {
 	return pc.register.Apply(
 		logic.Or(logic.Or(load, inc), reset),
 		logic.Mux4Way16(
-			in,
-			in, // load == 1
-			arithmetic.Inc16(pc.register.Apply(logic.O, in)), // inc == 1
-			logic.And16(in, logic.Not16(in)),                 // reset == 1
+			in, // {0,0}
+			in, // {1,0} load == 1
+			arithmetic.Inc16(pc.register.Apply(logic.O, in)), // {0,1} inc == 1
+			logic.And16(in, logic.Not16(in)),                 // {1,1} reset == 1
 			[2]logic.Bit{
-				logic.And(logic.Not(inc), logic.Or(load, reset)),
-				logic.And(logic.Not(load), logic.Or(inc, reset)),
+				logic.Or(reset, load),
+				logic.Or(reset, logic.And(logic.Not(load), inc)),
 			},
 		),
 	)
