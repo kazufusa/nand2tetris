@@ -3,6 +3,8 @@ package arithmetic
 import (
 	"fmt"
 	"testing"
+
+	logic "github.com/kazufusa/nand2tetris/01_Boolean_Logic"
 )
 
 func TestHalfAdder(t *testing.T) {
@@ -131,15 +133,19 @@ func TestInc16(t *testing.T) {
 
 func TestALU(t *testing.T) {
 	var tests = []struct {
-		name     string
-		expected Word
-		controls [6]Bit
-		x        Word
-		y        Word
+		name       string
+		expected   Word
+		expectedZr logic.Bit
+		expectedNg logic.Bit
+		controls   [6]Bit
+		x          Word
+		y          Word
 	}{
 		{
 			"0",
 			Word{},
+			logic.I,
+			logic.O,
 			[6]Bit{1, 0, 1, 0, 1, 0},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 1, 1},
@@ -147,6 +153,8 @@ func TestALU(t *testing.T) {
 		{
 			"1",
 			Word{1},
+			logic.O,
+			logic.O,
 			[6]Bit{1, 1, 1, 1, 1, 1},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 1, 1},
@@ -154,6 +162,8 @@ func TestALU(t *testing.T) {
 		{
 			"-1",
 			Word{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{1, 1, 1, 0, 1, 0},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 1, 1},
@@ -161,6 +171,8 @@ func TestALU(t *testing.T) {
 		{
 			"x",
 			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{0, 0, 1, 1, 0, 0},
 			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
 			Word{1, 1, 1, 1, 1},
@@ -168,6 +180,8 @@ func TestALU(t *testing.T) {
 		{
 			"x",
 			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 0, 1, 1, 0, 0},
 			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
 			Word{1, 1, 1, 1, 1},
@@ -175,6 +189,8 @@ func TestALU(t *testing.T) {
 		{
 			"y",
 			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{1, 1, 0, 0, 0, 0},
 			Word{1, 1, 1, 1, 1},
 			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
@@ -182,6 +198,8 @@ func TestALU(t *testing.T) {
 		{
 			"y",
 			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{1, 1, 0, 0, 0, 0},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
@@ -189,6 +207,8 @@ func TestALU(t *testing.T) {
 		{
 			"!x",
 			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{0, 0, 1, 1, 0, 1},
 			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
 			Word{1, 1, 1, 1, 1},
@@ -196,6 +216,8 @@ func TestALU(t *testing.T) {
 		{
 			"!y",
 			Word{0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{1, 1, 0, 0, 0, 1},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
@@ -203,6 +225,8 @@ func TestALU(t *testing.T) {
 		{
 			"-x",
 			Word{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.I,
+			logic.O,
 			[6]Bit{0, 0, 1, 1, 1, 1},
 			Word{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 1, 1, 1, 1},
@@ -210,6 +234,8 @@ func TestALU(t *testing.T) {
 		{
 			"-x",
 			Word{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{0, 0, 1, 1, 1, 1},
 			Word{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 1, 1, 1, 1},
@@ -217,6 +243,8 @@ func TestALU(t *testing.T) {
 		{
 			"-y",
 			Word{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.I,
+			logic.O,
 			[6]Bit{1, 1, 0, 0, 1, 1},
 			Word{1, 1, 1, 1, 1},
 			Word{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -224,6 +252,8 @@ func TestALU(t *testing.T) {
 		{
 			"-y",
 			Word{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+			logic.O,
+			logic.I,
 			[6]Bit{1, 1, 0, 0, 1, 1},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -231,6 +261,8 @@ func TestALU(t *testing.T) {
 		{
 			"x+1",
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 1, 1, 1, 1, 1},
 			Word{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 1, 1, 1, 1},
@@ -238,6 +270,8 @@ func TestALU(t *testing.T) {
 		{
 			"y+1",
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{1, 1, 0, 1, 1, 1},
 			Word{1, 1, 1, 1, 1},
 			Word{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -245,6 +279,8 @@ func TestALU(t *testing.T) {
 		{
 			"x-1",
 			Word{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 0, 1, 1, 1, 0},
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 1, 1, 1, 1},
@@ -252,6 +288,8 @@ func TestALU(t *testing.T) {
 		{
 			"y-1",
 			Word{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{1, 1, 0, 0, 1, 0},
 			Word{1, 1, 1, 1, 1},
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -259,6 +297,8 @@ func TestALU(t *testing.T) {
 		{
 			"x+y",
 			Word{1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 0, 0, 0, 1, 0},
 			Word{1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -266,6 +306,8 @@ func TestALU(t *testing.T) {
 		{
 			"x-y",
 			Word{1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 1, 0, 0, 1, 1},
 			Word{1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -273,6 +315,8 @@ func TestALU(t *testing.T) {
 		{
 			"y-x",
 			Word{1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 0, 0, 1, 1, 1},
 			Word{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -280,6 +324,8 @@ func TestALU(t *testing.T) {
 		{
 			"x&y",
 			Word{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 0, 0, 0, 0, 0},
 			Word{0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -287,6 +333,8 @@ func TestALU(t *testing.T) {
 		{
 			"x|y",
 			Word{1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			logic.O,
+			logic.O,
 			[6]Bit{0, 1, 0, 1, 0, 1},
 			Word{0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			Word{1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -295,7 +343,7 @@ func TestALU(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(fmt.Sprintf("out=%s", tt.name), func(t *testing.T) {
-			actual, _, _ := ALU(
+			actual, zr, ng := ALU(
 				tt.x,
 				tt.y,
 				tt.controls[0],
@@ -307,6 +355,12 @@ func TestALU(t *testing.T) {
 			)
 			if actual != tt.expected {
 				t.Errorf("controls(%v): expected %v, actual %v", tt.controls, tt.expected, actual)
+			}
+			if zr != tt.expectedZr {
+				t.Errorf("controls(%v): expected %v, actual %v", tt.controls, tt.expectedZr, zr)
+			}
+			if ng != tt.expectedNg {
+				t.Errorf("controls(%v): expected %v, actual %v", tt.controls, tt.expectedNg, ng)
 			}
 		})
 	}
