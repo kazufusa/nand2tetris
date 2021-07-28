@@ -1,6 +1,6 @@
 package logic
 
-type Bit uint8
+type Bit = uint8
 
 const (
 	O Bit = iota
