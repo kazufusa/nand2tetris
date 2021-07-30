@@ -101,5 +101,16 @@ func ALU(x, y Word, zx, nx, zy, ny, f, no Bit) (out Word, zr, ng Bit) {
 	out = logic.Mux16(logic.And16(x, y), Adder(x, y), f)
 	// Not out if no
 	out = logic.Mux16(out, logic.Not16(out), no)
+	zr = logic.Not(logic.Or(
+		logic.Or(
+			logic.Or(logic.Or(out[0], out[1]), logic.Or(out[2], out[3])),
+			logic.Or(logic.Or(out[4], out[5]), logic.Or(out[6], out[7])),
+		),
+		logic.Or(
+			logic.Or(logic.Or(out[8], out[9]), logic.Or(out[10], out[11])),
+			logic.Or(logic.Or(out[12], out[13]), logic.Or(out[14], out[15])),
+		),
+	))
+	ng = out[15]
 	return
 }
