@@ -40,7 +40,7 @@ func (cpu *CPU) Fetch(inM, inst Word, reset Bit) (outM Word, writeM Bit, address
 		cccccc[5], cccccc[4], cccccc[3], cccccc[2], cccccc[1], cccccc[0],
 	)
 
-	regA := cpu.a.Apply(logic.Or(logic.Not(i), logic.And(logic.Not(i), ddd[2])), logic.Mux16(inst, outM, i))
+	regA := cpu.a.Apply(logic.Or(logic.Not(i), logic.And(i, ddd[2])), logic.Mux16(inst, outM, i))
 
 	_ = cpu.d.Apply(logic.And(i, ddd[1]), outM)
 
