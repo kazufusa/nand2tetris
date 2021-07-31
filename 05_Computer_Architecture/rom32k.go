@@ -1,6 +1,9 @@
 package computer
 
 import (
+	"bytes"
+	"io/ioutil"
+
 	logic "github.com/kazufusa/nand2tetris/01_Boolean_Logic"
 	arithmetic "github.com/kazufusa/nand2tetris/02_Boolean_Arithmetic"
 	memory "github.com/kazufusa/nand2tetris/03_Memory"
@@ -35,6 +38,43 @@ func (rom *ROM32K) Fetch(addr [15]logic.Bit) (out Word) {
 		rom.rams[1].Apply(Word{}, logic.O, subAddr),
 		addr[14],
 	)
+}
+
+func (rom *ROM32K) LoadHackFile(p string) error {
+	b, err := ioutil.ReadFile(p)
+	if err != nil {
+		return err
+	}
+	addr := Word{}
+	for _, b := range bytes.Split(b, []byte("\n")) {
+		if len(b) != 16 {
+			continue
+		}
+		var _addr [15]logic.Bit
+		copy(_addr[:], addr[0:15])
+		word := Word{
+			b[15] - 48,
+			b[14] - 48,
+			b[13] - 48,
+			b[12] - 48,
+			b[11] - 48,
+			b[10] - 48,
+			b[9] - 48,
+			b[8] - 48,
+			b[7] - 48,
+			b[6] - 48,
+			b[5] - 48,
+			b[4] - 48,
+			b[3] - 48,
+			b[2] - 48,
+			b[1] - 48,
+			b[0] - 48,
+		}
+		rom.load(_addr, word)
+		addr = arithmetic.Inc16(addr)
+	}
+
+	return nil
 }
 
 func (rom *ROM32K) BulkLoad(ws []Word) {

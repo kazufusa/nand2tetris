@@ -2,6 +2,7 @@ package computer
 
 import (
 	"math"
+	"sync"
 
 	logic "github.com/kazufusa/nand2tetris/01_Boolean_Logic"
 )
@@ -43,9 +44,12 @@ var (
 // Screen[r*32+c/16]
 type TuiScreen struct {
 	words [NROW * NCOL / 16]Word
+	mu    sync.RWMutex
 }
 
 func (s *TuiScreen) Fetch(in Word, load Bit, addr [13]Bit) Word {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	defer func() {
 		if load == logic.I {
 			s.words[s.addr2index(addr)] = in
@@ -75,6 +79,8 @@ func (s *TuiScreen) coord2wordsIndex(r, c int) int {
 }
 
 func (s *TuiScreen) Str() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	retRune := make([]rune, NROW_C*(NCOL_C+1))
 	for r := 0; r < NROW_C; r++ {
 		for c := 0; c < NCOL_C; c++ {
