@@ -9,6 +9,141 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestCPUDest(t *testing.T) {
+	var tests = []struct {
+		expectedA      Word
+		expectedD      Word
+		expectedM      Word
+		expectedWriteM logic.Bit
+		given          []logic.Bit
+	}{
+		{Word{}, Word{}, Word{}, logic.O, []logic.Bit{0, 0, 0}},
+		{Word{0}, Word{0}, Word{1}, logic.I, []logic.Bit{1, 0, 0}},
+		{Word{0}, Word{1}, Word{0}, logic.O, []logic.Bit{0, 1, 0}},
+		{Word{0}, Word{1}, Word{1}, logic.I, []logic.Bit{1, 1, 0}},
+		{Word{1}, Word{0}, Word{0}, logic.O, []logic.Bit{0, 0, 1}},
+		{Word{1}, Word{0}, Word{1}, logic.I, []logic.Bit{1, 0, 1}},
+		{Word{1}, Word{1}, Word{0}, logic.O, []logic.Bit{0, 1, 1}},
+		{Word{1}, Word{1}, Word{1}, logic.I, []logic.Bit{1, 1, 1}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			cpu := NewCPU()
+			outM, writeM, _, _ := cpu.Fetch(
+				Word{},
+				Word{0, 0, 0, tt.given[0], tt.given[1], tt.given[2], 1, 1, 1, 1, 1, 1, 0, 1, 1, 1},
+				logic.O,
+			)
+			assert.Equal(t, tt.expectedA, cpu.a.Apply(logic.O, Word{}), "A")
+			assert.Equal(t, tt.expectedD, cpu.d.Apply(logic.O, Word{}), "D")
+			if writeM == logic.I {
+				assert.Equal(t, tt.expectedM, outM, "outM")
+			}
+			assert.Equal(t, tt.expectedWriteM, writeM, "writeM")
+		})
+	}
+}
+
+func TestCPUJump_neg0(t *testing.T) {
+	jumpToWord := Word{1, 1, 1}
+	jumpTo := [15]logic.Bit{1, 1, 1}
+	next := [15]logic.Bit{1}
+	var tests = []struct {
+		expectedPc [15]logic.Bit
+		given      []logic.Bit
+	}{
+		{next, []logic.Bit{0, 0, 0}},
+		{next, []logic.Bit{1, 0, 0}},
+		{next, []logic.Bit{0, 1, 0}},
+		{next, []logic.Bit{1, 1, 0}},
+		{jumpTo, []logic.Bit{0, 0, 1}},
+		{jumpTo, []logic.Bit{1, 0, 1}},
+		{jumpTo, []logic.Bit{0, 1, 1}},
+		{jumpTo, []logic.Bit{1, 1, 1}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.a.Apply(logic.I, jumpToWord)
+			cpu.clock.Progress()
+			_, _, _, pc := cpu.Fetch(
+				Word{},
+				Word{tt.given[0], tt.given[1], tt.given[2], 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1},
+				logic.O,
+			)
+			assert.Equal(t, tt.expectedPc, pc)
+		})
+	}
+}
+
+func TestCPUJump_0(t *testing.T) {
+	jumpToWord := Word{1, 1, 1}
+	jumpTo := [15]logic.Bit{1, 1, 1}
+	next := [15]logic.Bit{1}
+	var tests = []struct {
+		expectedPc [15]logic.Bit
+		given      []logic.Bit
+	}{
+		{next, []logic.Bit{0, 0, 0}},
+		{next, []logic.Bit{1, 0, 0}},
+		{jumpTo, []logic.Bit{0, 1, 0}},
+		{jumpTo, []logic.Bit{1, 1, 0}},
+		{next, []logic.Bit{0, 0, 1}},
+		{next, []logic.Bit{1, 0, 1}},
+		{jumpTo, []logic.Bit{0, 1, 1}},
+		{jumpTo, []logic.Bit{1, 1, 1}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.a.Apply(logic.I, jumpToWord)
+			cpu.clock.Progress()
+			_, _, _, pc := cpu.Fetch(
+				Word{},
+				Word{tt.given[0], tt.given[1], tt.given[2], 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1},
+				logic.O,
+			)
+			assert.Equal(t, tt.expectedPc, pc)
+		})
+	}
+}
+
+func TestCPUJump_1(t *testing.T) {
+	jumpToWord := Word{1, 1, 1}
+	jumpTo := [15]logic.Bit{1, 1, 1}
+	next := [15]logic.Bit{1}
+	var tests = []struct {
+		expectedPc [15]logic.Bit
+		given      []logic.Bit
+	}{
+		{next, []logic.Bit{0, 0, 0}},
+		{jumpTo, []logic.Bit{1, 0, 0}},
+		{next, []logic.Bit{0, 1, 0}},
+		{jumpTo, []logic.Bit{1, 1, 0}},
+		{next, []logic.Bit{0, 0, 1}},
+		{jumpTo, []logic.Bit{1, 0, 1}},
+		{next, []logic.Bit{0, 1, 1}},
+		{jumpTo, []logic.Bit{1, 1, 1}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%v", tt.given), func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.a.Apply(logic.I, jumpToWord)
+			cpu.clock.Progress()
+			_, _, _, pc := cpu.Fetch(
+				Word{},
+				Word{tt.given[0], tt.given[1], tt.given[2], 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1},
+				logic.O,
+			)
+			assert.Equal(t, tt.expectedPc, pc)
+		})
+	}
+}
+
 func TestCPU_Add(t *testing.T) {
 	// Add.asc
 	// 0000000000000010 @2
