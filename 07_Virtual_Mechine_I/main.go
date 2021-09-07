@@ -42,9 +42,10 @@ const (
 )
 
 var (
-	reComment      = regexp.MustCompile(`//[^\n]*`)
-	reForwardSpace = regexp.MustCompile(`(?m)^\s*`)
-	reSpace        = regexp.MustCompile(`(?m)^\s+`)
+	reComment       = regexp.MustCompile(`//[^\n]*`)
+	reForwardSpace  = regexp.MustCompile(`(?m)^ *`)
+	reBackwardSpace = regexp.MustCompile(`(?m) *$`)
+	reSpace         = regexp.MustCompile(`(?m) +`)
 )
 
 type Parser struct {
@@ -55,6 +56,7 @@ type Parser struct {
 func NewParser(s string) (*Parser, error) {
 	s = reComment.ReplaceAllString(s, "")
 	s = reForwardSpace.ReplaceAllString(s, "")
+	s = reBackwardSpace.ReplaceAllString(s, "")
 	s = reSpace.ReplaceAllString(s, " ")
 	s = strings.ReplaceAll(s, "\r", "")
 	parser := Parser{}
@@ -68,7 +70,7 @@ func NewParser(s string) (*Parser, error) {
 }
 
 func (p *Parser) hasMoreLines() bool {
-	return p.count < (len(p.lines) - 2)
+	return p.count < (len(p.lines) - 1)
 }
 
 func (p *Parser) advance() {
