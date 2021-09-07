@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test(t *testing.T) {
+func TestParser(t *testing.T) {
 	parser, _ := NewParser(`// Pushes and adds two constants
   // push 7 to stack
   push constant 7     // push
