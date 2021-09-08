@@ -126,7 +126,7 @@ func EmulatedResult(t *testing.T, fasm string) map[int]int {
 	com.WriteRom(2, 1000)
 	com.WriteRom(3, 3000)
 	com.WriteRom(4, 4000)
-	for i := 0; i < 1000; i++ {
+	for !com.IsFinished() {
 		com.FetchAndExecute(logic.O)
 	}
 	return com.ROMMap()
