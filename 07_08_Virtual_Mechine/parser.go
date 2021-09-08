@@ -1,4 +1,4 @@
-package vmI
+package vm
 
 import (
 	"errors"
