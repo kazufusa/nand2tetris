@@ -49,6 +49,16 @@ func (com *Computer) ROMMap() (ret map[int]int) {
 	return ret
 }
 
+func (com *Computer) IsFinished() bool {
+	switch x := com.rom.(type) {
+	case *VROM32K:
+		if _, ok := x.values[addr2int(com.pc)]; !ok {
+			return true
+		}
+	}
+	return false
+}
+
 type VMemory struct {
 	values map[int]Word
 }
