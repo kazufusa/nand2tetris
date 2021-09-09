@@ -56,6 +56,10 @@ func NewParser(s string) (*Parser, error) {
 	return &parser, nil
 }
 
+func (p *Parser) line() string {
+	return p.lines[p.count]
+}
+
 func (p *Parser) hasMoreLines() bool {
 	return p.count < (len(p.lines) - 1)
 }
@@ -67,7 +71,7 @@ func (p *Parser) advance() {
 func (p *Parser) commandType() (cmd Command, err error) {
 	args := strings.Split(p.lines[p.count], " ")
 	switch args[0] {
-	case "add", "sub", "neg", "eq", "gt", "lt", "and", "or", "no":
+	case "add", "sub", "neg", "eq", "gt", "lt", "and", "or", "not":
 		return C_ALITHMETIC, nil
 	case "push":
 		return C_PUSH, nil
