@@ -5,10 +5,18 @@ import (
 	memory "github.com/kazufusa/nand2tetris/03_Memory"
 )
 
+type IMemory interface {
+	Fetch(in Word, load Bit, addr [15]Bit) (out Word)
+}
+
+type IROM32K interface {
+	Fetch(addr [15]Bit) (out Word)
+}
+
 type Computer struct {
 	cpu   *CPU
-	ram   *Memory
-	rom   *ROM32K
+	ram   IMemory
+	rom   IROM32K
 	clock *memory.Clock
 
 	pc       [15]logic.Bit
@@ -16,7 +24,7 @@ type Computer struct {
 	addressM [15]logic.Bit
 }
 
-func NewComputer(cpu *CPU, ram *Memory, rom *ROM32K, clock *memory.Clock) Computer {
+func NewComputer(cpu *CPU, ram IMemory, rom IROM32K, clock *memory.Clock) Computer {
 	return Computer{cpu: cpu, ram: ram, rom: rom, clock: clock}
 }
 

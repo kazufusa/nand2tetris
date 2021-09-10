@@ -43,6 +43,23 @@ var (
 		{0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1},
 	}
+
+	maxInstructionString = `0000000000000000
+1111110000010000
+0000000000000001
+1111010011010000
+0000000000001010
+1110001100000001
+0000000000000001
+1111110000010000
+0000000000001100
+1110101010000111
+0000000000000000
+1111110000010000
+0000000000000010
+1110001100001000
+0000000000001110
+1110101010000111`
 )
 
 func TestComputer(t *testing.T) {
@@ -84,4 +101,46 @@ func TestComputer(t *testing.T) {
 		com.FetchAndExecute(logic.O)
 	}
 	assert.Equal(t, w10, com.ram.Fetch(w0, logic.O, addr2))
+}
+
+func TestEmulator(t *testing.T) {
+	var tests = []struct {
+		name string
+		inst interface{}
+	}{
+		{"word instruction", maxInstructions},
+		{"string instruction", maxInstructionString},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			com := NewEmulator(tt.inst)
+
+			addr0 := [15]logic.Bit{}
+			addr1 := [15]logic.Bit{1}
+			addr2 := [15]logic.Bit{0, 1}
+			w0 := Word{}
+			w6 := Word{0, 1, 1}
+			w10 := Word{0, 1, 0, 1}
+
+			com.ram.Fetch(w10, logic.I, addr0)
+			com.clock.Progress()
+			com.ram.Fetch(w6, logic.I, addr1)
+			com.clock.Progress()
+			for i := 0; i < 20; i++ {
+				com.FetchAndExecute(logic.O)
+			}
+			assert.Equal(t, w10, com.ram.Fetch(w0, logic.O, addr2))
+
+			com.FetchAndExecute(logic.I)
+			com.ram.Fetch(w6, logic.I, addr0)
+			com.clock.Progress()
+			com.ram.Fetch(w10, logic.I, addr1)
+			com.clock.Progress()
+			for i := 0; i < 20; i++ {
+				com.FetchAndExecute(logic.O)
+			}
+			assert.Equal(t, w10, com.ram.Fetch(w0, logic.O, addr2))
+		})
+	}
 }
