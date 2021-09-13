@@ -29,6 +29,21 @@ const (
 	ANot = "not"
 )
 
+type CodeWriteSpecification interface {
+	// setFileName(f string)
+	writeArithmetic(command string) error
+	writePushPop(command Command, arg1 string, arg2 int) error
+	// writeLabel(label string)
+	// writeGoto(label string)
+	// writeIf(label string)
+	// writeFunction(name string, nVars int)
+	// writeCall(name string, nArgs int)
+	// writeReturn()
+	close() error
+}
+
+var _ CodeWriteSpecification = (*CodeWriter)(nil)
+
 type CodeWriter struct {
 	out  string
 	name string
