@@ -11,8 +11,8 @@ import (
 // - Push/pop commands transfer data between the stack and memory segments
 // - Arithmetic-logical commands perform arithmetic and logical operations
 //   - add, sub, neg, eq, gt, lt, and, or, no
-// ( - Branching commands facilitate conditional and unconditional branching operations )
-// ( - Function commands facilitate function call-and-return operations )
+// - Branching commands facilitate conditional and unconditional branching operations
+// - Function commands facilitate function call-and-return operations
 
 type Command int
 
@@ -30,8 +30,8 @@ const (
 
 var (
 	reComment       = regexp.MustCompile(`//[^\n]*`)
-	reForwardSpace  = regexp.MustCompile(`(?m)^ *`)
-	reBackwardSpace = regexp.MustCompile(`(?m) *$`)
+	reForwardSpace  = regexp.MustCompile(`(?m)^\s*`)
+	reBackwardSpace = regexp.MustCompile(`(?m)\s*$`)
 	reSpace         = regexp.MustCompile(`(?m) +`)
 )
 
@@ -77,6 +77,18 @@ func (p *Parser) commandType() (cmd Command, err error) {
 		return C_PUSH, nil
 	case "pop":
 		return C_POP, nil
+	case "label":
+		return C_LABEL, nil
+	case "goto":
+		return C_GOTO, nil
+	case "if-goto":
+		return C_IF, nil
+	case "function":
+		return C_FUNCTION, nil
+	case "return":
+		return C_RETURN, nil
+	case "call":
+		return C_CALL, nil
 	}
 
 	return C_POP, errors.New("invalid command")
