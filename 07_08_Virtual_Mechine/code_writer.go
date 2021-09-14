@@ -36,9 +36,9 @@ type CodeWriteSpecification interface {
 	// writeLabel(label string)
 	// writeGoto(label string)
 	// writeIf(label string)
-	// writeFunction(name string, nVars int)
-	// writeCall(name string, nArgs int)
-	// writeReturn()
+	writeFunction(name string, nVars int) error
+	writeCall(name string, nArgs int) error
+	writeReturn() error
 	close() error
 }
 
@@ -128,6 +128,38 @@ func (c *CodeWriter) writePushPop(command Command, arg1 string, arg2 int) error 
 		return err
 	}
 	c.asm += asm
+	return nil
+}
+
+// 1. (function name)
+// 2. push 0 * repeac nVars times
+func (c *CodeWriter) writeFunction(name string, nVars int) error {
+	return nil
+}
+
+// 1. push return address
+// 2. push LCL
+// 3. push ARG
+// 4. push THIS
+// 5. push THAT
+// 6. ARG = SP - 5 - nArgs
+// 7. LCL = SP
+// 8. goto function
+// 9. (returnAddress)
+func (c *CodeWriter) writeCall(name string, nArgs int) error {
+	return nil
+}
+
+// * frame=LCL
+// * retAddr = *(frame - 5)
+// 1. *ARG = POP()
+// 2. SP = ARG + 1
+// 3. THAT = *(frame - 1)
+// 4. THIS = *(frame - 2)
+// 5. ARG = *(frame - 3)
+// 6. LCL = *(frame - 4)
+// 7. goto retAddr
+func (c *CodeWriter) writeReturn() error {
 	return nil
 }
 
