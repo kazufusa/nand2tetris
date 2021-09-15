@@ -244,31 +244,6 @@ A=M-1
 M=0
 (TRUE%d)
 `, n, jmp, n), nil
-	// 	return fmt.Sprintf(`@SP
-	// A=M
-	// A=A-1
-	// A=A-1
-	// D=M
-	// A=A+1
-	// D=D-M
-	// @SP
-	// M=M-1
-	// M=M-1
-	// @TRUE%d
-	// D;%s
-	// @SP
-	// A=M
-	// M=0
-	// @END%d
-	// 0;JMP
-	//
-	// (TRUE%d)
-	// @SP
-	// A=M
-	// M=-1
-	//
-	// (END%d)
-	// `, n, jmp, n, n, n), nil
 }
 
 func push(arg1 string, arg2 int, name string) (string, error) {
