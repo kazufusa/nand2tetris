@@ -1,5 +1,7 @@
 package assembler
 
+import "fmt"
+
 var (
 	comp = map[string]string{
 		"0":  "0101010",
@@ -84,6 +86,7 @@ func (c *Code) Dest(s string) string {
 	if ret, ok := dest[s]; ok {
 		return ret
 	}
+	fmt.Println(s)
 	return ""
 }
 
@@ -91,6 +94,7 @@ func (c *Code) Comp(s string) string {
 	if ret, ok := comp[s]; ok {
 		return ret
 	}
+	fmt.Println(s)
 	return ""
 }
 
@@ -98,5 +102,6 @@ func (c *Code) Jump(s string) string {
 	if ret, ok := jump[s]; ok {
 		return ret
 	}
+	fmt.Println(s)
 	return ""
 }

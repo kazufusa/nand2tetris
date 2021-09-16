@@ -33,8 +33,8 @@ type CodeWriteSpecification interface {
 	// setFileName(f string)
 	writeArithmetic(command string) error
 	writePushPop(command Command, arg1 string, arg2 int) error
-	// writeLabel(label string)
-	// writeGoto(label string)
+	writeLabel(label string) error
+	writeGoto(label string) error
 	// writeIf(label string)
 	writeFunction(name string, nVars int) error
 	writeCall(name string, nArgs int) error
@@ -45,10 +45,11 @@ type CodeWriteSpecification interface {
 var _ CodeWriteSpecification = (*CodeWriter)(nil)
 
 type CodeWriter struct {
-	out  string
-	name string
-	asm  string
-	n    int
+	out     string
+	name    string
+	asm     string
+	n       int
+	nReturn int
 }
 
 func NewCodeWriter(out string) *CodeWriter {
@@ -62,6 +63,11 @@ func (c *CodeWriter) write(s string) {
 
 func (c *CodeWriter) incN() {
 	c.n++
+}
+
+func (c *CodeWriter) getNReturn() int {
+	c.nReturn++
+	return c.nReturn
 }
 
 func (c *CodeWriter) writeArithmetic(cmd string) error {
@@ -131,9 +137,30 @@ func (c *CodeWriter) writePushPop(command Command, arg1 string, arg2 int) error 
 	return nil
 }
 
+func (c *CodeWriter) writeLabel(label string) error {
+	c.asm += fmt.Sprintf("(%s)\n", label)
+	return nil
+}
+
+func (c *CodeWriter) writeGoto(label string) error {
+	c.asm += fmt.Sprintf("@%s\n0;JMP\n", label)
+	return nil
+}
+
 // 1. (function name)
 // 2. push 0 * repeac nVars times
 func (c *CodeWriter) writeFunction(name string, nVars int) error {
+	asm := fmt.Sprintf(`(%s)
+`, name)
+	for i := 0; i < nVars; i++ {
+		asm += `@SP
+A=M
+M=0
+@SP
+M=M+1
+`
+	}
+	c.asm += asm
 	return nil
 }
 
@@ -147,6 +174,53 @@ func (c *CodeWriter) writeFunction(name string, nVars int) error {
 // 8. goto function
 // 9. (returnAddress)
 func (c *CodeWriter) writeCall(name string, nArgs int) error {
+	retAddr := fmt.Sprintf("retAddr%d", c.getNReturn())
+	subNArgs := ""
+	for i := 0; i < nArgs; i++ {
+		subNArgs += "D=D-1\n"
+	}
+	asm := fmt.Sprintf(`@%s
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+
+%s
+%s
+%s
+%s
+
+@SP
+D=M
+D=D-1
+D=D-1
+D=D-1
+D=D-1
+D=D-1
+%s
+@ARG
+M=D
+
+@SP
+D=M
+@LCL
+M=D
+
+@%s
+0;JMP
+(%s)
+`, retAddr,
+		pushFrameToStack("LCL"),
+		pushFrameToStack("ARG"),
+		pushFrameToStack("THIS"),
+		pushFrameToStack("THAT"),
+		subNArgs,
+		name,
+		retAddr,
+	)
+	c.asm += asm
 	return nil
 }
 
@@ -160,11 +234,59 @@ func (c *CodeWriter) writeCall(name string, nArgs int) error {
 // 6. LCL = *(frame - 4)
 // 7. goto retAddr
 func (c *CodeWriter) writeReturn() error {
+	asm := `@LCL
+D=M
+@R13
+M=D
+
+@SP
+M=M-1
+A=M
+D=M
+@ARG
+A=M
+M=D
+
+@ARG
+D=M+1
+@SP
+M=D
+
+@R13
+M=M-1
+D=M
+@THAT
+M=D
+
+@R13
+M=M-1
+D=M
+@THIS
+M=D
+
+@R13
+M=M-1
+D=M
+@ARG
+M=D
+
+@R13
+M=M-1
+D=M
+@LCL
+M=D
+
+@R13
+M=M-1
+A=M
+0;JMP
+`
+	c.asm += asm
 	return nil
 }
 
 func (c *CodeWriter) close() error {
-	return os.WriteFile(c.out, []byte(c.asm), 0777)
+	return os.WriteFile(c.out, []byte(c.asm), 0644)
 }
 
 func singleValueCommand(arg1 string) (string, error) {
@@ -387,4 +509,8 @@ M=D
 @SP
 M=M+1
 `, arg2), nil
+}
+
+func pushFrameToStack(s string) string {
+	return fmt.Sprintf("@%s\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n", s)
 }
