@@ -265,24 +265,28 @@ M=D
 
 @R13
 M=M-1
+A=M
 D=M
 @THAT
 M=D
 
 @R13
 M=M-1
+A=M
 D=M
 @THIS
 M=D
 
 @R13
 M=M-1
+A=M
 D=M
 @ARG
 M=D
 
 @R13
 M=M-1
+A=M
 D=M
 @LCL
 M=D
