@@ -35,7 +35,7 @@ type CodeWriteSpecification interface {
 	writePushPop(command Command, arg1 string, arg2 int) error
 	writeLabel(label string) error
 	writeGoto(label string) error
-	// writeIf(label string)
+	writeIf(label string) error
 	writeFunction(name string, nVars int) error
 	writeCall(name string, nArgs int) error
 	writeReturn() error
@@ -144,6 +144,17 @@ func (c *CodeWriter) writeLabel(label string) error {
 
 func (c *CodeWriter) writeGoto(label string) error {
 	c.asm += fmt.Sprintf("@%s\n0;JMP\n", label)
+	return nil
+}
+
+func (c *CodeWriter) writeIf(label string) error {
+	c.asm += fmt.Sprintf(`@SP
+M=M-1
+A=M
+D=M
+@%s
+D;JNE
+`, label)
 	return nil
 }
 

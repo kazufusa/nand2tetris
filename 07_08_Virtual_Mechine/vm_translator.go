@@ -40,7 +40,7 @@ func (t *VMTranslator) Conv() error {
 
 		// error handling
 		switch cmd {
-		case C_ALITHMETIC, C_LABEL, C_GOTO:
+		case C_ALITHMETIC, C_LABEL, C_GOTO, C_IF:
 			if err1 != nil {
 				return err1
 			}
@@ -63,6 +63,8 @@ func (t *VMTranslator) Conv() error {
 			t.codeWriter.writeLabel(arg1)
 		case C_GOTO:
 			t.codeWriter.writeGoto(arg1)
+		case C_IF:
+			t.codeWriter.writeIf(arg1)
 		case C_FUNCTION:
 			t.codeWriter.writeFunction(arg1, arg2)
 		case C_RETURN:
