@@ -55,6 +55,9 @@ func (com *Computer) IsFinished() bool {
 		if _, ok := x.values[addr2int(com.pc)]; !ok {
 			return true
 		}
+		if x.lastPcs[0] != 0 && x.lastPcs[0] == x.lastPcs[2] && x.lastPcs[1] == x.lastPcs[3] {
+			return true
+		}
 	}
 	return false
 }
@@ -66,7 +69,8 @@ type VMemory struct {
 var _ IMemory = (*Memory)(nil)
 
 type VROM32K struct {
-	values map[int]Word
+	values  map[int]Word
+	lastPcs [4]int
 }
 
 var _ IROM32K = (*VROM32K)(nil)
@@ -84,6 +88,8 @@ func (m *VMemory) Fetch(in Word, load Bit, addr [15]Bit) (out Word) {
 }
 
 func (m *VROM32K) Fetch(addr [15]Bit) (out Word) {
+	copy(m.lastPcs[1:4], m.lastPcs[0:3])
+	m.lastPcs[0] = addr2int(addr)
 	if m.values == nil {
 		m.values = make(map[int]Word)
 	}
