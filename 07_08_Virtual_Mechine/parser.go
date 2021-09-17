@@ -36,17 +36,18 @@ var (
 )
 
 type Parser struct {
-	lines []string
-	count int
+	fileName string
+	lines    []string
+	count    int
 }
 
-func NewParser(s string) (*Parser, error) {
+func NewParser(s, fileName string) (*Parser, error) {
 	s = reComment.ReplaceAllString(s, "")
 	s = reForwardSpace.ReplaceAllString(s, "")
 	s = reBackwardSpace.ReplaceAllString(s, "")
 	s = reSpace.ReplaceAllString(s, " ")
 	s = strings.ReplaceAll(s, "\r", "")
-	parser := Parser{}
+	parser := Parser{fileName: fileName}
 	parser.lines = strings.Split(s, "\n")
 	for i := len(parser.lines) - 1; i >= 0; i-- {
 		if parser.lines[i] == "" {

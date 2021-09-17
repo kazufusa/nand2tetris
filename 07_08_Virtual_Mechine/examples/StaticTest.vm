@@ -7,9 +7,9 @@
 push constant 111
 push constant 333
 push constant 888
-pop static 8
-pop static 3
-pop static 1
+pop static 8 // 888
+pop static 3 // 333
+pop static 1 // 111
 push static 3
 push static 1
 sub

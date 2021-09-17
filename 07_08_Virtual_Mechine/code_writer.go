@@ -17,20 +17,10 @@ const (
 	SegTemp     = "temp"
 	SegConstant = "constant"
 	SegStatic   = "static"
-
-	AAdd = "add"
-	ASub = "sub"
-	ANeg = "neg"
-	AEq  = "eq"
-	AGt  = "gt"
-	ALt  = "lt"
-	AAnd = "and"
-	AOr  = "or"
-	ANot = "not"
 )
 
 type CodeWriteSpecification interface {
-	// setFileName(f string)
+	setFileName(f string)
 	writeArithmetic(command string) error
 	writePushPop(command Command, arg1 string, arg2 int) error
 	writeLabel(label string) error
@@ -44,34 +34,60 @@ type CodeWriteSpecification interface {
 
 var _ CodeWriteSpecification = (*CodeWriter)(nil)
 
+// static symbols: Xxx.i, Xxx = vm file name, i= 0,1,2,...
+// label name:     functionName$label
+// return symbol:  functionName$ret.i, i=0,1,2,...
 type CodeWriter struct {
-	out     string
-	name    string
-	asm     string
-	n       int
-	nReturn int
+	out      string
+	name     string
+	asm      string
+	fileName string
+	funcName string
+	iRet     int
+	iJmp     int
 }
 
 func NewCodeWriter(out string) *CodeWriter {
 	name := strings.TrimSuffix(filepath.Base(out), filepath.Ext(out))
-	return &CodeWriter{out: out, asm: "", name: name}
+	asm := `@256
+D=A
+@SP
+M=D
+`
+	cd := CodeWriter{out: out, asm: asm, name: name}
+	cd.writeCall("Sys.init", 0)
+	return &cd
+}
+
+func (c *CodeWriter) setFileName(f string) {
+	c.fileName = f
+	c.iRet = 0
+	c.iJmp = 0
+}
+
+func (c *CodeWriter) retLabel() string {
+	defer func() { c.iRet++ }()
+	return fmt.Sprintf("%s$ret.%d", c.funcName, c.iRet)
+}
+
+func (c *CodeWriter) staticSymbol(n int) string {
+	return fmt.Sprintf("%s.%d", c.fileName, n)
+}
+
+func (c *CodeWriter) label(l string) string {
+	return fmt.Sprintf("%s.%s", c.funcName, l)
+}
+
+func (c *CodeWriter) jmpLabel() string {
+	defer func() { c.iJmp++ }()
+	return fmt.Sprintf("%s.%d", c.funcName, c.iJmp)
 }
 
 func (c *CodeWriter) write(s string) {
 	c.asm += s
 }
 
-func (c *CodeWriter) incN() {
-	c.n++
-}
-
-func (c *CodeWriter) getNReturn() int {
-	c.nReturn++
-	return c.nReturn
-}
-
 func (c *CodeWriter) writeArithmetic(cmd string) error {
-	defer c.incN()
 	var err error
 	var s string
 
@@ -81,7 +97,7 @@ func (c *CodeWriter) writeArithmetic(cmd string) error {
 	case "neg", "not":
 		s, err = singleValueCommand(cmd)
 	case "eq", "gt", "lt":
-		s, err = twoValuesJumpCommand(cmd, c.n)
+		s, err = twoValuesJumpCommand(cmd, c.jmpLabel())
 	default:
 		err = errors.New("unknown command")
 	}
@@ -118,15 +134,13 @@ func (c *CodeWriter) writeArithmetic(cmd string) error {
 //   static:
 //     addresses 16 to 255
 func (c *CodeWriter) writePushPop(command Command, arg1 string, arg2 int) error {
-	defer c.incN()
-
 	asm := ""
 	var err error
 	switch command {
 	case C_PUSH:
-		asm, err = push(arg1, arg2, c.name)
+		asm, err = push(arg1, arg2, c.fileName)
 	case C_POP:
-		asm, err = pop(arg1, arg2, c.name)
+		asm, err = pop(arg1, arg2, c.fileName)
 	default:
 		return errors.New("unknown command")
 	}
@@ -161,6 +175,7 @@ D;JNE
 // 1. (function name)
 // 2. push 0 * repeac nVars times
 func (c *CodeWriter) writeFunction(name string, nVars int) error {
+	c.funcName = name
 	asm := fmt.Sprintf(`(%s)
 `, name)
 	for i := 0; i < nVars; i++ {
@@ -185,7 +200,7 @@ M=M+1
 // 8. goto function
 // 9. (returnAddress)
 func (c *CodeWriter) writeCall(name string, nArgs int) error {
-	retAddr := fmt.Sprintf("retAddr%d", c.getNReturn())
+	retAddr := c.retLabel()
 	subNArgs := ""
 	for i := 0; i < nArgs; i++ {
 		subNArgs += "D=D-1\n"
@@ -250,6 +265,16 @@ D=M
 @R13
 M=D
 
+D=D-1
+D=D-1
+D=D-1
+D=D-1
+D=D-1
+A=D
+D=M
+@R14
+M=D
+
 @SP
 M=M-1
 A=M
@@ -291,8 +316,7 @@ D=M
 @LCL
 M=D
 
-@R13
-M=M-1
+@R14
 A=M
 0;JMP
 `
@@ -350,7 +374,7 @@ M=D
 `, cmd), nil
 }
 
-func twoValuesJumpCommand(arg1 string, n int) (string, error) {
+func twoValuesJumpCommand(arg1 string, label string) (string, error) {
 	jmp := ""
 	switch arg1 {
 	case "eq":
@@ -374,40 +398,40 @@ D=D-M
 M=M-1
 A=M-1
 M=-1
-@TRUE%d
+@%s
 D;%s
 @SP
 A=M-1
 M=0
-(TRUE%d)
-`, n, jmp, n), nil
+(%s)
+`, label, jmp, label), nil
 }
 
-func push(arg1 string, arg2 int, name string) (string, error) {
+func push(arg1 string, arg2 int, fileName string) (string, error) {
 	switch arg1 {
 	case SegLocal, SegArgument, SegThis, SegThat:
-		return pushVirtualSeg(arg1, arg2, name)
+		return pushVirtualSeg(arg1, arg2)
 	case SegPointer, SegTemp, SegStatic:
-		return pushPointer(arg1, arg2, name)
+		return pushPointer(arg1, arg2, fileName)
 	case SegConstant:
-		return pushConstant(arg1, arg2, name)
+		return pushConstant(arg1, arg2)
 	default:
 		return "", errors.New("unknown segment")
 	}
 }
 
-func pop(arg1 string, arg2 int, name string) (string, error) {
+func pop(arg1 string, arg2 int, fileName string) (string, error) {
 	switch arg1 {
 	case SegLocal, SegArgument, SegThis, SegThat:
-		return popVirtualSeg(arg1, arg2, name)
+		return popVirtualSeg(arg1, arg2)
 	case SegPointer, SegTemp, SegStatic:
-		return popPointer(arg1, arg2, name)
+		return popPointer(arg1, arg2, fileName)
 	default:
 		return "", errors.New("unknown segment")
 	}
 }
 
-func pushVirtualSeg(arg1 string, arg2 int, name string) (string, error) {
+func pushVirtualSeg(arg1 string, arg2 int) (string, error) {
 	var addr string
 	switch arg1 {
 	case SegLocal:
@@ -434,7 +458,7 @@ M=M+1
 `, arg2, addr), nil
 }
 
-func popVirtualSeg(arg1 string, arg2 int, name string) (string, error) {
+func popVirtualSeg(arg1 string, arg2 int) (string, error) {
 	var addr string
 	switch arg1 {
 	case SegLocal:
@@ -464,7 +488,7 @@ M=D
 `, addr, arg2), nil
 }
 
-func pushPointer(arg1 string, arg2 int, name string) (string, error) {
+func pushPointer(arg1 string, arg2 int, fileName string) (string, error) {
 	var addr string
 	switch arg1 {
 	case SegPointer:
@@ -478,7 +502,7 @@ func pushPointer(arg1 string, arg2 int, name string) (string, error) {
 	case SegTemp:
 		addr = fmt.Sprintf("R%d", 5+arg2)
 	case SegStatic:
-		addr = fmt.Sprintf("%d", arg2+16)
+		addr = fmt.Sprintf("%s.%d", fileName, arg2)
 	}
 	return fmt.Sprintf(`@%s
 D=M
@@ -490,7 +514,7 @@ M=M+1
 `, addr), nil
 }
 
-func popPointer(arg1 string, arg2 int, name string) (string, error) {
+func popPointer(arg1 string, arg2 int, fileName string) (string, error) {
 	var addr string
 	switch arg1 {
 	case SegPointer:
@@ -504,7 +528,7 @@ func popPointer(arg1 string, arg2 int, name string) (string, error) {
 	case SegTemp:
 		addr = fmt.Sprintf("R%d", 5+arg2)
 	case SegStatic:
-		addr = fmt.Sprintf("%d", arg2+16)
+		addr = fmt.Sprintf("%s.%d", fileName, arg2)
 	}
 	return fmt.Sprintf(`@SP
 M=M-1
@@ -515,7 +539,7 @@ M=D
 `, addr), nil
 }
 
-func pushConstant(arg1 string, arg2 int, name string) (string, error) {
+func pushConstant(arg1 string, arg2 int) (string, error) {
 	return fmt.Sprintf(`@%d
 D=A
 @SP

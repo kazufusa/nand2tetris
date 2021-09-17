@@ -15,7 +15,7 @@ func TestParser(t *testing.T) {
   // pop 7 and 8 from stack and push 15 to stack
   add                 // arithmetic
 	function Main.main
-  //`)
+  //`, "test")
 
 	// line 1
 	c, err := parser.commandType()

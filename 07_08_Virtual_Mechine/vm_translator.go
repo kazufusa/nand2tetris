@@ -8,35 +8,66 @@ import (
 )
 
 type VMTranslator struct {
-	parser     *Parser
+	parsers    []*Parser
 	codeWriter *CodeWriter
 }
 
 func NewVMTranslator(in string) (*VMTranslator, error) {
 	out := strings.TrimSuffix(in, filepath.Ext(in)) + ".asm"
-	vm, err := os.ReadFile(in)
+	fs, err := findVMs(in)
 	if err != nil {
 		return nil, err
 	}
-	parser, err := NewParser(string(vm))
-	if err != nil {
-		return nil, err
+
+	var parsers []*Parser
+	for _, f := range fs {
+		fileName := strings.TrimSuffix(filepath.Base(f), ".vm")
+		_vm, err := os.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		parser, err := NewParser(string(_vm), fileName)
+		if err != nil {
+			return nil, err
+		}
+		parsers = append(parsers, parser)
 	}
+
+	vm := ""
+	for _, f := range fs {
+		_vm, err := os.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		vm += "\n" + string(_vm)
+	}
+
 	return &VMTranslator{
-		parser:     parser,
+		parsers:    parsers,
 		codeWriter: NewCodeWriter(out),
 	}, nil
 }
 
 func (t *VMTranslator) Conv() error {
-	for {
-		t.codeWriter.write("// " + t.parser.line() + "\n")
-		cmd, err := t.parser.commandType()
+	for _, parser := range t.parsers {
+		t.codeWriter.setFileName(parser.fileName)
+		err := t.conv(parser)
 		if err != nil {
 			return err
 		}
-		arg1, err1 := t.parser.arg1()
-		arg2, err2 := t.parser.arg2()
+	}
+	return t.codeWriter.close()
+}
+
+func (t *VMTranslator) conv(parser *Parser) error {
+	for {
+		t.codeWriter.write("// " + parser.line() + "\n")
+		cmd, err := parser.commandType()
+		if err != nil {
+			return err
+		}
+		arg1, err1 := parser.arg1()
+		arg2, err2 := parser.arg2()
 
 		// error handling
 		switch cmd {
@@ -47,10 +78,10 @@ func (t *VMTranslator) Conv() error {
 		case C_RETURN:
 		default:
 			if err1 != nil {
-				return fmt.Errorf("'%s': %s", t.parser.line(), err1)
+				return fmt.Errorf("'%s': %s", parser.line(), err1)
 			}
 			if err2 != nil {
-				return fmt.Errorf("'%s': %s", t.parser.line(), err2)
+				return fmt.Errorf("'%s': %s", parser.line(), err2)
 			}
 		}
 
@@ -74,11 +105,22 @@ func (t *VMTranslator) Conv() error {
 		default:
 		}
 
-		if t.parser.hasMoreLines() {
+		if parser.hasMoreLines() {
 			t.codeWriter.write("\n")
-			t.parser.advance()
+			parser.advance()
 		} else {
-			return t.codeWriter.close()
+			return nil
 		}
 	}
+}
+
+func findVMs(f string) ([]string, error) {
+	s, err := os.Stat(f)
+	if err != nil {
+		return nil, err
+	}
+	if !s.IsDir() {
+		return []string{f}, nil
+	}
+	return filepath.Glob(filepath.Join(f, "*.vm"))
 }

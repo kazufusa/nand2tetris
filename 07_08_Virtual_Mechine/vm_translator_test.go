@@ -3,6 +3,7 @@ package vm
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -33,26 +34,27 @@ import (
 
 func TestFinalStateOfRam(t *testing.T) {
 	var tests = []struct {
-		name     string
-		expected map[int]int
-		prepare  func(*computer.Computer)
+		name        string
+		expected    map[int]int
+		prepare     func(*computer.Computer)
+		noBootstrap bool
 	}{
-		{"SimpleTest", map[int]int{
+		{"SimpleTest.vm", map[int]int{
 			1:   500,
 			2:   1000,
 			3:   3000,
 			4:   4000,
 			0:   257,
 			256: -1, 257: 17,
-		}, defaultPreparation},
-		{"SimpleAdd", map[int]int{
+		}, defaultPreparation, true},
+		{"SimpleAdd.vm", map[int]int{
 			1: 500,
 			2: 1000,
 			3: 3000,
 			4: 4000,
 			0: 257, 256: 15, 257: 8,
-		}, defaultPreparation},
-		{"StackTest", map[int]int{
+		}, defaultPreparation, true},
+		{"StackTest.vm", map[int]int{
 			1:   500,
 			2:   1000,
 			3:   3000,
@@ -70,8 +72,8 @@ func TestFinalStateOfRam(t *testing.T) {
 			265: -91,
 			266: 82,
 			267: 112,
-		}, defaultPreparation},
-		{"BasicTest", map[int]int{
+		}, defaultPreparation, true},
+		{"BasicTest.vm", map[int]int{
 			1:    500,
 			2:    1000,
 			3:    3000,
@@ -88,8 +90,8 @@ func TestFinalStateOfRam(t *testing.T) {
 			3006: 36,
 			4005: 45,
 			4002: 42,
-		}, defaultPreparation},
-		{"PointerTest", map[int]int{
+		}, defaultPreparation, true},
+		{"PointerTest.vm", map[int]int{
 			1:    500,
 			2:    1000,
 			3:    3030,
@@ -100,21 +102,21 @@ func TestFinalStateOfRam(t *testing.T) {
 			257:  46,
 			3032: 32,
 			3046: 46,
-		}, defaultPreparation},
-		{"StaticTest", map[int]int{
+		}, defaultPreparation, true},
+		{"StaticTest.vm", map[int]int{
 			1:   500,
 			2:   1000,
 			3:   3000,
 			4:   4000,
 			0:   257,
-			17:  111,
-			19:  333,
-			24:  888,
+			16:  888,
+			17:  333,
+			18:  111,
 			256: 1110,
 			257: 888,
 			258: 888,
-		}, defaultPreparation},
-		{"BasicLoop", map[int]int{
+		}, defaultPreparation, true},
+		{"BasicLoop.vm", map[int]int{
 			1:    500,
 			2:    1000,
 			3:    3000,
@@ -125,8 +127,8 @@ func TestFinalStateOfRam(t *testing.T) {
 			257:  1,
 			500:  15,
 			1000: 0,
-		}, defaultPreparation},
-		{"FibonacciSeries", map[int]int{
+		}, defaultPreparation, true},
+		{"FibonacciSeries.vm", map[int]int{
 			1:    500,
 			2:    1000,
 			3:    3000,
@@ -143,25 +145,24 @@ func TestFinalStateOfRam(t *testing.T) {
 			4003: 2,
 			4004: 3,
 			4005: 5,
-		}, defaultPreparation},
-		{"SimpleFunction", map[int]int{
+		}, defaultPreparation, true},
+		{"SimpleFunction.vm", map[int]int{
 			1:   305,
 			2:   300,
 			3:   3010,
 			4:   4010,
 			0:   311,
-			13:  312,
-			310: 1196,
+			13:  313,
+			14:  10000,
+			310: 0,
 			311: 37,
-			312: 9,
+			312: 10000,
 			313: 305,
 			314: 300,
 			315: 3010,
 			316: 4010,
 			317: 0,
 			318: 0,
-			319: 1196,
-			320: 37,
 		},
 			func(com *computer.Computer) {
 				com.WriteRom(0, 317)
@@ -171,29 +172,59 @@ func TestFinalStateOfRam(t *testing.T) {
 				com.WriteRom(4, 4000)
 				com.WriteRom(310, 1234)
 				com.WriteRom(311, 37)
-				com.WriteRom(312, 9)
+				com.WriteRom(312, 10000)
 				com.WriteRom(313, 305)
 				com.WriteRom(314, 300)
 				com.WriteRom(315, 3010)
 				com.WriteRom(316, 4010)
-			},
+			}, true,
 		},
+		{"StaticsTest", map[int]int{
+			// initial SP: 256, sys.Init: 352, WHILE: 366, retAddr1: 54
+			// retaddr2: 418
+			0:   263,
+			1:   261,
+			2:   256,
+			3:   0,
+			4:   0,
+			5:   0,
+			13:  263,
+			14:  628,
+			16:  6,
+			17:  8,
+			18:  23,
+			19:  15,
+			256: 54,
+			257: 0,
+			258: 0,
+			259: 0,
+			260: 0,
+			261: -2,
+			262: 8,
+			263: 261,
+			264: 256,
+			265: 0,
+			266: 0,
+			267: 8,
+			268: 15,
+		}, nil, false},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			vm := filepath.Join("examples/final_ram_state", tt.name+".vm")
-			asm := filepath.Join("examples/final_ram_state", tt.name+".asm")
+			asm := filepath.Join("examples", strings.TrimSuffix(tt.name, ".vm")+".asm")
 			defer os.Remove(asm)
 
+			vm := filepath.Join("examples", tt.name)
 			translator, err := NewVMTranslator(vm)
-			assert.NoError(t, err)
-
+			require.NoError(t, err)
+			if tt.noBootstrap {
+				translator.codeWriter.asm = ""
+			}
 			err = translator.Conv()
 			require.NoError(t, err)
 
 			actual := EmulatedResult(t, asm, tt.prepare)
-			// assert.Equal(t, tt.expected, actual)
 			if !cmp.Equal(tt.expected, actual) {
 				t.Error(cmp.Diff(tt.expected, actual))
 			}
@@ -215,12 +246,29 @@ func EmulatedResult(t *testing.T, fasm string, prepare func(*computer.Computer))
 	ret, err := asm.Assemble()
 	require.NoError(t, err)
 	com := computer.NewEmulator(ret)
-	prepare(com)
-	for i := 0; i < 10000; i++ {
+	if prepare != nil {
+		prepare(com)
+	}
+	var i int
+	for i = 0; i < 10000; i++ {
 		com.FetchAndExecute(logic.O)
 		if com.IsFinished() {
 			break
 		}
 	}
 	return com.ROMMap()
+}
+
+func TestFindVMs(t *testing.T) {
+	actual, _ := findVMs("examples/BasicLoop.vm")
+	expected := []string{"examples/BasicLoop.vm"}
+	assert.Equal(t, expected, actual)
+
+	actual, _ = findVMs("examples/StaticsTest")
+	expected = []string{
+		"examples/StaticsTest/Class1.vm",
+		"examples/StaticsTest/Class2.vm",
+		"examples/StaticsTest/Sys.vm",
+	}
+	assert.Equal(t, expected, actual)
 }
