@@ -1,4 +1,4 @@
-package vmI
+package vm
 
 import (
 	"testing"
@@ -14,7 +14,8 @@ func TestParser(t *testing.T) {
   push   constant   8 // push
   // pop 7 and 8 from stack and push 15 to stack
   add                 // arithmetic
-  //`)
+	function Main.main
+  //`, "test")
 
 	// line 1
 	c, err := parser.commandType()
@@ -51,6 +52,19 @@ func TestParser(t *testing.T) {
 	a1, err = parser.arg1()
 	assert.NoError(t, err)
 	assert.Equal(t, "add", a1)
+	_, err = parser.arg2()
+	assert.Error(t, err)
+
+	assert.True(t, parser.hasMoreLines())
+	parser.advance()
+
+	// line 4
+	c, err = parser.commandType()
+	assert.NoError(t, err)
+	assert.Equal(t, C_FUNCTION, c)
+	a1, err = parser.arg1()
+	assert.NoError(t, err)
+	assert.Equal(t, "Main.main", a1)
 	_, err = parser.arg2()
 	assert.Error(t, err)
 
