@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,4 +37,14 @@ func TestTokenizer(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTokenizerInterface(t *testing.T) {
+	tk, err := NewTokenizer("./test/Square/Main.jack")
+	require.NoError(t, err)
+	for i := 0; i < 124; i++ {
+		assert.True(t, tk.HasMoreToken())
+		tk.Advance()
+	}
+	assert.False(t, tk.HasMoreToken())
 }

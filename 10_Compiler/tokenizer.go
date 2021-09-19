@@ -5,6 +5,7 @@ import (
 	"html"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 var (
@@ -29,12 +30,48 @@ type ITokenizer interface {
 type Tokenizer struct {
 	tokens []Token
 	jack   string
+	index  int
 }
+
+var _ ITokenizer = (*Tokenizer)(nil)
 
 func NewTokenizer(jack string) (*Tokenizer, error) {
 	tk := Tokenizer{jack: jack}
 	tk.parse()
 	return &tk, nil
+}
+
+func (tk *Tokenizer) HasMoreToken() bool {
+	return tk.index < len(tk.tokens)
+}
+
+func (tk *Tokenizer) Advance() {
+	tk.index++
+}
+
+func (tk *Tokenizer) TokenType() TokenType {
+	return tk.tokens[tk.index].tokenType
+}
+
+func (tk *Tokenizer) KeyWord() KeyWordType {
+	return KeyWordType(tk.tokens[tk.index].value)
+}
+
+func (tk *Tokenizer) Symbol() string {
+	return tk.tokens[tk.index].value
+}
+
+func (tk *Tokenizer) Identifier() string {
+	return tk.tokens[tk.index].value
+}
+
+func (tk *Tokenizer) IntVal() int {
+	v, _ := strconv.Atoi(tk.tokens[tk.index].value)
+	return v
+}
+
+func (tk *Tokenizer) StringVal() string {
+	return tk.tokens[tk.index].value
 }
 
 func (tk *Tokenizer) parse() error {
