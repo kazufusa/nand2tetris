@@ -4,6 +4,12 @@ type TokenType string
 
 type KeyWordType string
 
+type Structure int
+
+type Statement int
+
+type Expression int
+
 const (
 	TkKeyWord     TokenType = "keyword"
 	TkSymbol      TokenType = "symbol"
@@ -32,4 +38,31 @@ const (
 	KwFalse       KeyWordType = "false"
 	KwNull        KeyWordType = "null"
 	KwThis        KeyWordType = "this"
+
+	StrClass Structure = iota
+	StrClassVarDec
+	StrType
+	StrSubroutineDec
+	StrParameterList
+	StrSubroutineBody
+	StrVarDec
+	StrClassName
+	StrSubroutineName
+	StrVarName
+
+	StStatements Statement = iota
+	StStatement
+	StLetStatement
+	StIfStatement
+	StWhileStatement
+	StDoStatement
+	StReturnStatement
+
+	ExpExpression Expression = iota
+	ExpTerm
+	ExpSubroutineCall
+	ExpExpressionList
+	ExpOp
+	ExpUnaryOp
+	ExpKeywordConstant
 )
