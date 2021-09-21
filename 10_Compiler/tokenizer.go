@@ -9,10 +9,6 @@ import (
 )
 
 var (
-	reComment1 = regexp.MustCompile("(?m)//.*$")
-	reComment2 = regexp.MustCompile(`/\*.*\*/`)
-	reComment3 = regexp.MustCompile(`(?s)/\*\*.*\*/`)
-
 	reInt = regexp.MustCompile("^\\d*$")
 )
 
@@ -81,12 +77,31 @@ func (tk *Tokenizer) parse() error {
 	}
 
 	s := string(buf)
-	s = reComment1.ReplaceAllString(s, "")
-	s = reComment2.ReplaceAllString(s, "")
-	s = reComment3.ReplaceAllString(s, "")
 
+	comment1 := false
+	comment2 := false
 	stringConstant := false
-	for _, r := range s {
+	for i, r := range s {
+		if comment1 && r == '\n' {
+			comment1 = false
+			continue
+		} else if comment1 {
+			continue
+		} else if !comment1 && !comment2 && r == '/' && i < len(s)-2 && s[i+1] == '/' {
+			comment1 = true
+			continue
+		}
+
+		if comment2 && r == '/' && i > 0 && s[i-1] == '*' {
+			comment2 = false
+			continue
+		} else if comment2 {
+			continue
+		} else if !comment1 && !comment2 && r == '/' && i < len(s)-2 && s[i+1] == '*' {
+			comment2 = true
+			continue
+		}
+
 		if stringConstant && r == '"' {
 			stringConstant = false
 			tk.tokens = append(tk.tokens, Token{})
