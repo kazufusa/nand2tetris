@@ -1,68 +1,53 @@
 package compiler
 
-type TokenType string
+type TokenTag string
 
-type KeyWordType string
+type KeyWordTag string
 
-type Structure int
-
-type Statement int
-
-type Expression int
+type StructureTag string
 
 const (
-	TkKeyWord     TokenType = "keyword"
-	TkSymbol      TokenType = "symbol"
-	TkIdentifier  TokenType = "identifier"
-	TkIntConst    TokenType = "integerConstant"
-	TkStringConst TokenType = "stringConstant"
+	TkKeyWord     TokenTag = "keyword"
+	TkSymbol      TokenTag = "symbol"
+	TkIdentifier  TokenTag = "identifier"
+	TkIntConst    TokenTag = "integerConstant"
+	TkStringConst TokenTag = "stringConstant"
 
-	KwClass       KeyWordType = "class"
-	KwMethod      KeyWordType = "method"
-	KwFunction    KeyWordType = "function"
-	KwConstructor KeyWordType = "constructor"
-	KwInt         KeyWordType = "int"
-	KwBoolean     KeyWordType = "boolean"
-	KwChar        KeyWordType = "char"
-	KwVoid        KeyWordType = "void"
-	KwVar         KeyWordType = "var"
-	KwStatic      KeyWordType = "static"
-	KwField       KeyWordType = "field"
-	KwLet         KeyWordType = "let"
-	KwDo          KeyWordType = "do"
-	KwIf          KeyWordType = "if"
-	KwElse        KeyWordType = "else"
-	KwWhile       KeyWordType = "while"
-	KwReturn      KeyWordType = "return"
-	KwTrue        KeyWordType = "true"
-	KwFalse       KeyWordType = "false"
-	KwNull        KeyWordType = "null"
-	KwThis        KeyWordType = "this"
+	KwClass       KeyWordTag = "class"
+	KwMethod      KeyWordTag = "method"
+	KwFunction    KeyWordTag = "function"
+	KwConstructor KeyWordTag = "constructor"
+	KwInt         KeyWordTag = "int"
+	KwBoolean     KeyWordTag = "boolean"
+	KwChar        KeyWordTag = "char"
+	KwVoid        KeyWordTag = "void"
+	KwVar         KeyWordTag = "var"
+	KwStatic      KeyWordTag = "static"
+	KwField       KeyWordTag = "field"
+	KwLet         KeyWordTag = "let"
+	KwDo          KeyWordTag = "do"
+	KwIf          KeyWordTag = "if"
+	KwElse        KeyWordTag = "else"
+	KwWhile       KeyWordTag = "while"
+	KwReturn      KeyWordTag = "return"
+	KwTrue        KeyWordTag = "true"
+	KwFalse       KeyWordTag = "false"
+	KwNull        KeyWordTag = "null"
+	KwThis        KeyWordTag = "this"
 
-	StrClass Structure = iota
-	StrClassVarDec
-	StrType
-	StrSubroutineDec
-	StrParameterList
-	StrSubroutineBody
-	StrVarDec
-	StrClassName
-	StrSubroutineName
-	StrVarName
-
-	StStatements Statement = iota
-	StStatement
-	StLetStatement
-	StIfStatement
-	StWhileStatement
-	StDoStatement
-	StReturnStatement
-
-	ExpExpression Expression = iota
-	ExpTerm
-	ExpSubroutineCall
-	ExpExpressionList
-	ExpOp
-	ExpUnaryOp
-	ExpKeywordConstant
+	StrClass            StructureTag = "class"
+	StrClassVarDec      StructureTag = "classVarDec"
+	StrSubroutineDec    StructureTag = "subroutineDec"
+	StrParameterList    StructureTag = "parameterList"
+	StrSubroutineBody   StructureTag = "subroutineBody"
+	StrVarDec           StructureTag = "varDec"
+	StrStatements       StructureTag = "statements"
+	StrLetStatements    StructureTag = "letStatements"
+	StrIfStatements     StructureTag = "ifStatements"
+	StrWhileStatements  StructureTag = "whileStatements"
+	StrDoStatements     StructureTag = "doStatements"
+	StrReturnStatements StructureTag = "returnStatements"
+	StrExpression       StructureTag = "expression"
+	StrTerm             StructureTag = "term"
+	StrExpressionList   StructureTag = "expressionList"
 )

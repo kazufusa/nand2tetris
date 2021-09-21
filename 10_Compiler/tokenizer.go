@@ -19,8 +19,8 @@ var (
 type ITokenizer interface {
 	HasMoreToken() bool
 	Advance()
-	TokenType() TokenType
-	KeyWord() KeyWordType
+	TokenType() TokenTag
+	KeyWord() KeyWordTag
 	Symbol() string
 	Identifier() string
 	IntVal() int
@@ -49,12 +49,12 @@ func (tk *Tokenizer) Advance() {
 	tk.index++
 }
 
-func (tk *Tokenizer) TokenType() TokenType {
+func (tk *Tokenizer) TokenType() TokenTag {
 	return tk.tokens[tk.index].tokenType
 }
 
-func (tk *Tokenizer) KeyWord() KeyWordType {
-	return KeyWordType(tk.tokens[tk.index].value)
+func (tk *Tokenizer) KeyWord() KeyWordTag {
+	return KeyWordTag(tk.tokens[tk.index].value)
 }
 
 func (tk *Tokenizer) Symbol() string {
@@ -204,7 +204,7 @@ func (tk *Tokenizer) ToXml() string {
 }
 
 type Token struct {
-	tokenType TokenType
+	tokenType TokenTag
 	value     string
 }
 
