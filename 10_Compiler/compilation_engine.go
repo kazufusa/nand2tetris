@@ -353,7 +353,6 @@ func (c *CompilationEngine) compileDo() (*Node, error) {
 	node.children = append(node.children, child)
 
 	child, err = c.compileExpressionList()
-	fmt.Println(child, err, c.nextToken())
 	if isTargetFound(err) {
 		return nil, targetFound(err)
 	} else {
@@ -379,7 +378,6 @@ func (c *CompilationEngine) compileExpressionList() (*Node, error) {
 		return nil, targetFound(err)
 	} else if err != nil {
 		// FIXME
-		fmt.Println(c.nextToken())
 		c.rollbackNextToken()
 
 		c.rollbackNextToken()
@@ -606,9 +604,14 @@ func (c *CompilationEngine) compileWhile() (interface{}, error) {
 // - An expression prefixed by one of the expressions of unary operators - or ~:
 // - An expression of the form expression op expression where op is one of the binary oprators(+,-,*,/,&,|,>,<,=)
 // - (expression) an expression in parentheses
-func (c *CompilationEngine) compileExpression() (*Node, error) {
+func (c *CompilationEngine) compileExpression() (_ *Node, err error) {
 	var child interface{}
-	var err error
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
 
 	node := Node{structureTag: StrExpression, children: []interface{}{}}
 
@@ -621,7 +624,6 @@ func (c *CompilationEngine) compileExpression() (*Node, error) {
 	for {
 		child, err = c.processSymbol("+", "-", "*", "/", "&", "|", "<", ">", "=")
 		if err != nil {
-			c.rollbackNextToken()
 			break
 		}
 		node.children = append(node.children, child)
@@ -646,11 +648,12 @@ func (c *CompilationEngine) compileExpression() (*Node, error) {
 // subroutineCall
 func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 	var child interface{}
-	defer func(iToken int) {
+	iTokenBack := c.iToken
+	defer func() {
 		if err != nil {
-			c.iToken = iToken
+			c.restoreNextToken(iTokenBack)
 		}
-	}(c.iToken)
+	}()
 
 	node := Node{structureTag: StrTerm, children: []interface{}{}}
 
@@ -660,7 +663,8 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 		node.children = append(node.children, child)
 		return &node, nil
 	}
-	c.rollbackNextToken()
+	c.restoreNextToken(iTokenBack)
+	node = Node{structureTag: StrTerm, children: []interface{}{}}
 
 	// keywordConst
 	child, err = c.processKeyword(KwTrue, KwFalse, KwNull, KwThis)
@@ -668,20 +672,46 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 		node.children = append(node.children, child)
 		return &node, nil
 	}
-	c.rollbackNextToken()
+	c.restoreNextToken(iTokenBack)
+	node = Node{structureTag: StrTerm, children: []interface{}{}}
 
-	// varName and varName[expression]
+	// varName[expression]
 	child, err = c.processIdentifier()
 	if err == nil {
 		node.children = append(node.children, child)
 
 		// [
 		child, err = c.processSymbol("[")
-		if err != nil {
-			return &node, nil
-		} else {
+		if err == nil {
 			node.children = append(node.children, child)
+
+			// expression
+			child, err = c.compileExpression()
+			if err != nil {
+				return &node, targetFound(err)
+			} else {
+				node.children = append(node.children, child)
+			}
+
+			// ]
+			child, err = c.processSymbol("]")
+			if err != nil {
+				return &node, targetFound(err)
+			} else {
+				node.children = append(node.children, child)
+			}
+
+			return &node, nil
 		}
+	}
+	c.restoreNextToken(iTokenBack)
+	node = Node{structureTag: StrTerm, children: []interface{}{}}
+
+	// (expression)
+	// (
+	child, err = c.processSymbol("(")
+	if err == nil {
+		node.children = append(node.children, child)
 
 		// expression
 		child, err = c.compileExpression()
@@ -691,8 +721,8 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 			node.children = append(node.children, child)
 		}
 
-		// ]
-		child, err = c.processSymbol("]")
+		// )
+		child, err = c.processSymbol(")")
 		if err != nil {
 			return &node, targetFound(err)
 		} else {
@@ -701,11 +731,76 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 
 		return &node, nil
 	}
-	c.rollbackNextToken()
+	c.restoreNextToken(iTokenBack)
+	node = Node{structureTag: StrTerm, children: []interface{}{}}
 
-	// TODO (expression)
-	// TODO unaryOp term
-	// TODO subroutineCall
+	// unaryOp term
+	child, err = c.processSymbol("-", "~")
+	if err == nil {
+		node.children = append(node.children, child)
+
+		child, err = c.compileTerm()
+		if err != nil {
+			return &node, targetFound(err)
+		} else {
+			node.children = append(node.children, child)
+		}
+		return &node, nil
+	}
+	c.restoreNextToken(iTokenBack)
+	node = Node{structureTag: StrTerm, children: []interface{}{}}
+
+	// subroutineCall
+	// 1. subroutineName(expressionList)
+	// 2. (className|varName).subroutineName(expressionList)
+	child, err = c.processIdentifier()
+	if err == nil {
+		node.children = append(node.children, child)
+
+		child, err = c.processSymbol(".")
+		if err != nil {
+			c.rollbackNextToken()
+		} else {
+			node.children = append(node.children, child)
+
+			child, err = c.processIdentifier()
+			if err != nil {
+				return nil, targetFound(err)
+			}
+			node.children = append(node.children, child)
+		}
+
+		child, err = c.processSymbol("(")
+		if err == nil {
+			node.children = append(node.children, child)
+
+			child, err = c.compileExpressionList()
+			fmt.Println(c.iToken)
+			if isTargetFound(err) {
+				return nil, targetFound(err)
+			} else {
+				node.children = append(node.children, child)
+			}
+
+			child, err = c.processSymbol(")")
+			if err != nil {
+				return nil, targetFound(err)
+			}
+			node.children = append(node.children, child)
+
+			return &node, nil
+		}
+	}
+	c.restoreNextToken(iTokenBack)
+	node = Node{structureTag: StrTerm, children: []interface{}{}}
+
+	// varName
+	child, err = c.processIdentifier()
+	if err == nil {
+		node.children = append(node.children, child)
+		return &node, nil
+	}
+	c.restoreNextToken(iTokenBack)
 
 	if len(node.children) == 0 {
 		return nil, NewErrCompileFailed(&Token{}, "term")
@@ -716,6 +811,9 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 
 func (c *CompilationEngine) processTokenTag(tags ...interface{}) (*Token, error) {
 	token := c.nextToken()
+	if token == nil {
+		return nil, NewErrCompileFailed(token, toString(tags...))
+	}
 	for _, tag := range tags {
 		if token.tokenType == tag {
 			return token, nil
@@ -746,7 +844,7 @@ func (c *CompilationEngine) processKeyword(kws ...interface{}) (*Token, error) {
 func (c *CompilationEngine) processSymbol(ss ...string) (*Token, error) {
 	token := c.nextToken()
 	if token == nil {
-		return nil, NewErrCompileFailed(nil, strings.Join(ss, ","))
+		return nil, NewErrCompileFailed(&Token{value: "nil"}, strings.Join(ss, ","))
 	}
 	if token.tokenType == TkSymbol {
 		for _, s := range ss {

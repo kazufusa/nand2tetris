@@ -41,10 +41,22 @@ func TestCompileTerm(t *testing.T) {
 		err      bool
 		given    []Token
 	}{
+		{"", true, []Token{}},
 		{"", true, []Token{{TkSymbol, "("}}},
 		{"", true, []Token{{TkKeyWord, "if"}}},
-		{"<term>\n  <identifier> b </identifier>\n</term>\n", false, []Token{{TkIdentifier, "b"}}},
 		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkSymbol, ")"}, {TkSymbol, "]"}}},
+		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "a"}}},
+		{"<term>\n  <identifier> b </identifier>\n</term>\n", false, []Token{{TkIdentifier, "b"}}},
+		{`<term>
+  <symbol> ( </symbol>
+  <expression>
+    <term>
+      <identifier> a </identifier>
+    </term>
+  </expression>
+  <symbol> ) </symbol>
+</term>
+`, false, []Token{{TkSymbol, "("}, {TkIdentifier, "a"}, {TkSymbol, ")"}}},
 		{`<term>
   <identifier> b </identifier>
   <symbol> [ </symbol>
@@ -59,6 +71,8 @@ func TestCompileTerm(t *testing.T) {
 			false,
 			[]Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "c"}, {TkSymbol, "]"}},
 		},
+		{"<term>\n  <symbol> - </symbol>\n  <term>\n    <identifier> a </identifier>\n  </term>\n</term>\n",
+			false, []Token{{TkSymbol, "-"}, {TkIdentifier, "a"}}},
 		{"<term>\n  <integerConstant> 2 </integerConstant>\n</term>\n",
 			false, []Token{{TkIntConst, "2"}}},
 		{"<term>\n  <stringConstant> hello </stringConstant>\n</term>\n",
@@ -73,16 +87,87 @@ func TestCompileTerm(t *testing.T) {
 			false, []Token{{TkKeyWord, "null"}}},
 		{"<term>\n  <keyword> this </keyword>\n</term>\n",
 			false, []Token{{TkKeyWord, "this"}}},
+		{`<term>
+  <identifier> a </identifier>
+  <symbol> ( </symbol>
+	<expressionList>
+	</expressionList>
+  <symbol> ) </symbol>
+</term>
+`,
+			false, []Token{{TkIdentifier, "a"}, {TkSymbol, "("}, {TkSymbol, ")"}}},
 	}
-	for _, tt := range tests {
+	for i, tt := range tests {
+		if i != 16 {
+			continue
+		}
 		tt := tt
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			ce := NewCompilationEngine(tt.given)
 			tree, err := ce.compileTerm()
 			if tt.err {
 				require.Error(t, err)
 				assert.Equal(t, 0, ce.iToken)
-				assert.Equal(t, &tt.given[0], ce.nextToken())
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
+}
+
+func TestCompileExpression(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{}},
+		{"", true, []Token{{TkSymbol, "("}}},
+		{"", true, []Token{{TkKeyWord, "if"}}},
+		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkSymbol, ")"}, {TkSymbol, "]"}}},
+		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "a"}}},
+		{
+			"<expression>\n" +
+				"  <term>\n" +
+				"    <integerConstant> 2 </integerConstant>\n" +
+				"  </term>\n" +
+				"</expression>\n",
+			false, []Token{{TkIntConst, "2"}}},
+		{
+			"<expression>\n" +
+				"  <term>\n" +
+				"    <integerConstant> 2 </integerConstant>\n" +
+				"  </term>\n" +
+				"  <symbol> + </symbol>\n" +
+				"  <term>\n" +
+				"    <integerConstant> 2 </integerConstant>\n" +
+				"  </term>\n" +
+				"</expression>\n",
+			false, []Token{{TkIntConst, "2"}, {TkSymbol, "+"}, {TkIntConst, "2"}}},
+		{
+			"<expression>\n" +
+				"  <term>\n" +
+				"    <stringConstant> hello </stringConstant>\n" +
+				"  </term>\n" +
+				"</expression>\n",
+			false, []Token{{TkStringConst, "hello"}}},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileExpression()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, tree.ToString(""))
