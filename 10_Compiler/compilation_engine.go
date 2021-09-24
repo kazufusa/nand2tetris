@@ -258,9 +258,15 @@ func (c *CompilationEngine) compileStatements() (*Node, error) {
 
 // 1. let varName = expression;
 // 2. let varName[expression1] = expression2;
-func (c *CompilationEngine) compileLet() (*Node, error) {
+func (c *CompilationEngine) compileLet() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
 	var child interface{}
-	var err error
 	node := Node{structureTag: StrLetStatement, children: []interface{}{}}
 
 	child, err = c.processKeyword(KwLet)

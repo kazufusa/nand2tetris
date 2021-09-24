@@ -308,3 +308,83 @@ func TestCompileVarDec(t *testing.T) {
 		})
 	}
 }
+
+func TestCompileLet(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{{TkSymbol, "("}}},
+		{"", true, []Token{{TkKeyWord, "let"}}},
+		{"", true, []Token{{TkKeyWord, "let"}, {TkIdentifier, "a"}}},
+		{
+			"<letStatement>\n" +
+				"  <keyword> let </keyword>\n" +
+				"  <identifier> a </identifier>\n" +
+				"  <symbol> = </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <identifier> b </identifier>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</letStatement>\n",
+			false, []Token{
+				{TkKeyWord, "let"},
+				{TkIdentifier, "a"},
+				{TkSymbol, "="},
+				{TkIdentifier, "b"},
+				{TkSymbol, ";"},
+			},
+		},
+		{
+			"<letStatement>\n" +
+				"  <keyword> let </keyword>\n" +
+				"  <identifier> a </identifier>\n" +
+				"  <symbol> [ </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <identifier> aa </identifier>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ] </symbol>\n" +
+				"  <symbol> = </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <identifier> b </identifier>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</letStatement>\n",
+			false, []Token{
+				{TkKeyWord, "let"},
+				{TkIdentifier, "a"},
+				{TkSymbol, "["},
+				{TkIdentifier, "aa"},
+				{TkSymbol, "]"},
+				{TkSymbol, "="},
+				{TkIdentifier, "b"},
+				{TkSymbol, ";"},
+			},
+		},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileLet()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
+}
