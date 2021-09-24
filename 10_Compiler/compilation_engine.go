@@ -86,10 +86,10 @@ type ICompilationEngine interface {
 	compileVarDec() (*Node, error)
 	compileStatements() (*Node, error)
 	compileLet() (*Node, error)
-	compileIf() (*Node, error)
+	// compileIf() (*Node, error)
 	compileWhile() (*Node, error)
 	compileDo() (*Node, error)
-	compileReturn() (*Node, error)
+	// compileReturn() (*Node, error)
 	compileExpression() (*Node, error)
 	compileTerm() (*Node, error)
 	compileExpressionList() (*Node, error)
@@ -99,6 +99,8 @@ type CompilationEngine struct {
 	tokens []Token
 	iToken int
 }
+
+var _ ICompilationEngine = (*CompilationEngine)(nil)
 
 func NewCompilationEngine(tokens []Token) *CompilationEngine {
 	return &CompilationEngine{tokens: tokens}
@@ -406,9 +408,15 @@ func (c *CompilationEngine) compileExpressionList() (_ *Node, err error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileVarDec() (*Node, error) {
+func (c *CompilationEngine) compileVarDec() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
 	var child interface{}
-	var err error
 	node := Node{structureTag: StrVarDec, children: []interface{}{}}
 
 	child, err = c.processKeyword(KwVar)
@@ -438,7 +446,7 @@ func (c *CompilationEngine) compileVarDec() (*Node, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileSubroutine() (interface{}, error) {
+func (c *CompilationEngine) compileSubroutine() (*Node, error) {
 	var child interface{}
 	var err error
 	node := Node{structureTag: StrSubroutineDec, children: []interface{}{}}
@@ -488,7 +496,7 @@ func (c *CompilationEngine) compileSubroutine() (interface{}, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileParameterList() (interface{}, error) {
+func (c *CompilationEngine) compileParameterList() (*Node, error) {
 	var child interface{}
 	var err error
 
@@ -518,7 +526,7 @@ func (c *CompilationEngine) compileParameterList() (interface{}, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileSubroutineBody() (interface{}, error) {
+func (c *CompilationEngine) compileSubroutineBody() (*Node, error) {
 	var child interface{}
 	var err error
 
@@ -559,7 +567,7 @@ func (c *CompilationEngine) compileSubroutineBody() (interface{}, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileWhile() (interface{}, error) {
+func (c *CompilationEngine) compileWhile() (*Node, error) {
 	token := c.nextToken()
 	if token.tokenType != TkKeyWord ||
 		KeyWordTag(token.value) != KwWhile {

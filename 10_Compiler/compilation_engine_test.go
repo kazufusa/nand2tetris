@@ -258,5 +258,53 @@ func TestCompileExpressionList(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestCompileVarDec(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{{TkSymbol, "("}}},
+		{
+			"", true, []Token{
+				{TkKeyWord, "var"},
+				{TkIdentifier, "testType"},
+				{TkIdentifier, "testName"},
+			},
+		},
+		{
+			"<varDec>\n" +
+				"  <keyword> var </keyword>\n" +
+				"  <identifier> testType </identifier>\n" +
+				"  <identifier> testName </identifier>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</varDec>\n",
+			false, []Token{
+				{TkKeyWord, "var"},
+				{TkIdentifier, "testType"},
+				{TkIdentifier, "testName"},
+				{TkSymbol, ";"},
+			},
+		},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileVarDec()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
 }
