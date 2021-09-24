@@ -46,32 +46,42 @@ func TestCompileTerm(t *testing.T) {
 		{"", true, []Token{{TkKeyWord, "if"}}},
 		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkSymbol, ")"}, {TkSymbol, "]"}}},
 		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "a"}}},
-		{"<term>\n  <identifier> b </identifier>\n</term>\n", false, []Token{{TkIdentifier, "b"}}},
-		{`<term>
-  <symbol> ( </symbol>
-  <expression>
-    <term>
-      <identifier> a </identifier>
-    </term>
-  </expression>
-  <symbol> ) </symbol>
-</term>
-`, false, []Token{{TkSymbol, "("}, {TkIdentifier, "a"}, {TkSymbol, ")"}}},
-		{`<term>
-  <identifier> b </identifier>
-  <symbol> [ </symbol>
-  <expression>
-    <term>
-      <identifier> c </identifier>
-    </term>
-  </expression>
-  <symbol> ] </symbol>
-</term>
-`,
+		{
+			"<term>\n" +
+				"  <identifier> b </identifier>\n" +
+				"</term>\n",
+			false, []Token{{TkIdentifier, "b"}}},
+		{
+			"<term>\n" +
+				"  <symbol> ( </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <identifier> a </identifier>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ) </symbol>\n" +
+				"</term>\n",
+			false, []Token{{TkSymbol, "("}, {TkIdentifier, "a"}, {TkSymbol, ")"}}},
+		{
+			"<term>\n" +
+				"  <identifier> b </identifier>\n" +
+				"  <symbol> [ </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <identifier> c </identifier>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ] </symbol>\n" +
+				"</term>\n",
 			false,
 			[]Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "c"}, {TkSymbol, "]"}},
 		},
-		{"<term>\n  <symbol> - </symbol>\n  <term>\n    <identifier> a </identifier>\n  </term>\n</term>\n",
+		{"<term>\n" +
+			"  <symbol> - </symbol>\n" +
+			"  <term>\n" +
+			"    <identifier> a </identifier>\n" +
+			"  </term>\n" +
+			"</term>\n",
 			false, []Token{{TkSymbol, "-"}, {TkIdentifier, "a"}}},
 		{"<term>\n  <integerConstant> 2 </integerConstant>\n</term>\n",
 			false, []Token{{TkIntConst, "2"}}},
@@ -87,20 +97,16 @@ func TestCompileTerm(t *testing.T) {
 			false, []Token{{TkKeyWord, "null"}}},
 		{"<term>\n  <keyword> this </keyword>\n</term>\n",
 			false, []Token{{TkKeyWord, "this"}}},
-		{`<term>
-  <identifier> a </identifier>
-  <symbol> ( </symbol>
-	<expressionList>
-	</expressionList>
-  <symbol> ) </symbol>
-</term>
-`,
+		{"<term>\n" +
+			"  <identifier> a </identifier>\n" +
+			"  <symbol> ( </symbol>\n" +
+			"  <expressionList>\n" +
+			"  </expressionList>\n" +
+			"  <symbol> ) </symbol>\n" +
+			"</term>\n",
 			false, []Token{{TkIdentifier, "a"}, {TkSymbol, "("}, {TkSymbol, ")"}}},
 	}
 	for i, tt := range tests {
-		if i != 16 {
-			continue
-		}
 		tt := tt
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			ce := NewCompilationEngine(tt.given)

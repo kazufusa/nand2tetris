@@ -595,16 +595,8 @@ func (c *CompilationEngine) compileWhile() (interface{}, error) {
 	return &node, nil
 }
 
-// compileExpression returns compiled node tree and error
-// expression is one of the following:
-// - A constant
-// - A variable name in scope. The variable may be static, field, local, or parameter
-// - The this keyword, denoting the current object (cannot be used in functions)
-// - An array element using the syntax arr[expression], where arr is a variable name of type Array in scope
-// - A subroutine call that returns a non-void type
-// - An expression prefixed by one of the expressions of unary operators - or ~:
-// - An expression of the form expression op expression where op is one of the binary oprators(+,-,*,/,&,|,>,<,=)
-// - (expression) an expression in parentheses
+// compileExpression returns compiled node tree and error.
+// expression is defined as `term (op term)*`
 func (c *CompilationEngine) compileExpression() (_ *Node, err error) {
 	var child interface{}
 	iTokenBack := c.iToken
@@ -627,6 +619,7 @@ func (c *CompilationEngine) compileExpression() (_ *Node, err error) {
 	for {
 		child, err = c.processSymbol("+", "-", "*", "/", "&", "|", "<", ">", "=")
 		if err != nil {
+			c.rollbackNextToken()
 			break
 		}
 		node.children = append(node.children, child)
@@ -780,6 +773,8 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 			child, err = c.compileExpressionList()
 			if isTargetFound(err) {
 				return nil, targetFound(err)
+			} else if err != nil {
+				node.children = append(node.children, &Node{structureTag: StrExpressionList})
 			} else {
 				node.children = append(node.children, child)
 			}
