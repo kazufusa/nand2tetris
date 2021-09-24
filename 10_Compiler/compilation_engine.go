@@ -105,8 +105,8 @@ func NewCompilationEngine(tokens []Token) *CompilationEngine {
 }
 
 func (c *CompilationEngine) nextToken() *Token {
+	defer func() { c.iToken++ }()
 	if c.iToken < len(c.tokens) {
-		defer func() { c.iToken++ }()
 		return &c.tokens[c.iToken]
 	}
 	return nil
@@ -368,21 +368,22 @@ func (c *CompilationEngine) compileDo() (*Node, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileExpressionList() (*Node, error) {
+func (c *CompilationEngine) compileExpressionList() (_ *Node, err error) {
 	var child interface{}
-	var err error
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
 	node := Node{structureTag: StrExpressionList, children: []interface{}{}}
 
 	child, err = c.compileExpression()
 	if isTargetFound(err) {
 		return nil, targetFound(err)
 	} else if err != nil {
-		// FIXME
-		c.rollbackNextToken()
-
-		c.rollbackNextToken()
-		c.rollbackNextToken()
-		return &node, nil
+		return nil, err
 	} else {
 		node.children = append(node.children, child)
 	}
@@ -616,7 +617,9 @@ func (c *CompilationEngine) compileExpression() (_ *Node, err error) {
 	node := Node{structureTag: StrExpression, children: []interface{}{}}
 
 	child, err = c.compileTerm()
-	if err != nil {
+	if isTargetFound(err) {
+		return nil, err
+	} else if err != nil {
 		return nil, targetNotFound(err)
 	}
 	node.children = append(node.children, child)
@@ -775,7 +778,6 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 			node.children = append(node.children, child)
 
 			child, err = c.compileExpressionList()
-			fmt.Println(c.iToken)
 			if isTargetFound(err) {
 				return nil, targetFound(err)
 			} else {

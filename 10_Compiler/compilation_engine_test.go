@@ -177,3 +177,80 @@ func TestCompileExpression(t *testing.T) {
 	}
 
 }
+
+func TestCompileExpressionList(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{{TkSymbol, "("}}},
+		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkSymbol, ")"}, {TkSymbol, "]"}}},
+		{
+			"<expressionList>\n</expressionList>\n",
+			true,
+			[]Token{{TkKeyWord, "if"}},
+		},
+		{
+			"",
+			true,
+			[]Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "a"}},
+		},
+		{
+			"<expressionList>\n</expressionList>\n",
+			true,
+			[]Token{},
+		},
+		{
+			"<expressionList>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <integerConstant> 2 </integerConstant>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"</expressionList>\n",
+			false, []Token{{TkIntConst, "2"}},
+		},
+		{"<expressionList>\n" +
+			"  <expression>\n" +
+			"    <term>\n" +
+			"      <integerConstant> 2 </integerConstant>\n" +
+			"    </term>\n" +
+			"    <symbol> + </symbol>\n" +
+			"    <term>\n" +
+			"      <integerConstant> 2 </integerConstant>\n" +
+			"    </term>\n" +
+			"  </expression>\n" +
+			"</expressionList>\n",
+			false, []Token{{TkIntConst, "2"}, {TkSymbol, "+"}, {TkIntConst, "2"}}},
+		{
+			"<expressionList>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <stringConstant> hello </stringConstant>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"</expressionList>\n",
+			false, []Token{{TkStringConst, "hello"}},
+		},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileExpressionList()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
+
+}
