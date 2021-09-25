@@ -605,6 +605,92 @@ func (c *CompilationEngine) compileSubroutineBody() (_ *Node, err error) {
 	return &node, nil
 }
 
+func (c *CompilationEngine) compileIf() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
+	var child interface{}
+	node := Node{structureTag: StrIfStatement, children: []interface{}{}}
+
+	child, err = c.processKeyword(KwIf)
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.processSymbol("(")
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.compileExpression()
+	if isTargetFound(err) {
+		return nil, err
+	} else if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.processSymbol(")")
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.processSymbol("{")
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.compileStatements()
+	if isTargetFound(err) {
+		return nil, err
+	} else if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.processSymbol("}")
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	// else
+	child, err = c.processKeyword(KwElse)
+	if err == nil {
+		node.children = append(node.children, child)
+
+		child, err = c.processSymbol("{")
+		if err != nil {
+			return nil, targetNotFound(err)
+		}
+		node.children = append(node.children, child)
+
+		child, err = c.compileStatements()
+		if isTargetFound(err) {
+			return nil, err
+		} else if err != nil {
+			return nil, targetNotFound(err)
+		}
+		node.children = append(node.children, child)
+
+		child, err = c.processSymbol("}")
+		if err != nil {
+			return nil, targetNotFound(err)
+		}
+		node.children = append(node.children, child)
+	}
+
+	return &node, nil
+}
+
 func (c *CompilationEngine) compileWhile() (*Node, error) {
 	token := c.nextToken()
 	if token.tokenType != TkKeyWord ||

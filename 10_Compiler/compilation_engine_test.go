@@ -391,3 +391,149 @@ func TestCompileLet(t *testing.T) {
 		})
 	}
 }
+
+func TestCompileIf(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{
+			{TkSymbol, "("},
+			{TkSymbol, ")"},
+		}},
+		{"", true, []Token{
+			{TkKeyWord, "if"},
+			{TkSymbol, "{"},
+			{TkSymbol, "}"},
+		}},
+		{"", true, []Token{
+			{TkKeyWord, "if"},
+			{TkSymbol, "("},
+			{TkSymbol, ")"},
+			{TkSymbol, "{"},
+			{TkSymbol, "}"},
+		}},
+		{
+			"<ifStatement>\n" +
+				"  <keyword> if </keyword>\n" +
+				"  <symbol> ( </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <keyword> true </keyword>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ) </symbol>\n" +
+				"  <symbol> { </symbol>\n" +
+				"  <statements>\n" +
+				"    <letStatement>\n" +
+				"      <keyword> let </keyword>\n" +
+				"      <identifier> a </identifier>\n" +
+				"      <symbol> = </symbol>\n" +
+				"      <expression>\n" +
+				"        <term>\n" +
+				"          <identifier> b </identifier>\n" +
+				"        </term>\n" +
+				"      </expression>\n" +
+				"      <symbol> ; </symbol>\n" +
+				"    </letStatement>\n" +
+				"  </statements>\n" +
+				"  <symbol> } </symbol>\n" +
+				"</ifStatement>\n",
+			false, []Token{
+				{TkKeyWord, "if"},
+				{TkSymbol, "("},
+				{TkKeyWord, "true"},
+				{TkSymbol, ")"},
+				{TkSymbol, "{"},
+				{TkKeyWord, "let"},
+				{TkIdentifier, "a"},
+				{TkSymbol, "="},
+				{TkIdentifier, "b"},
+				{TkSymbol, ";"},
+				{TkSymbol, "}"},
+			}},
+		{
+			"<ifStatement>\n" +
+				"  <keyword> if </keyword>\n" +
+				"  <symbol> ( </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <keyword> true </keyword>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ) </symbol>\n" +
+				"  <symbol> { </symbol>\n" +
+				"  <statements>\n" +
+				"    <letStatement>\n" +
+				"      <keyword> let </keyword>\n" +
+				"      <identifier> a </identifier>\n" +
+				"      <symbol> = </symbol>\n" +
+				"      <expression>\n" +
+				"        <term>\n" +
+				"          <identifier> b </identifier>\n" +
+				"        </term>\n" +
+				"      </expression>\n" +
+				"      <symbol> ; </symbol>\n" +
+				"    </letStatement>\n" +
+				"  </statements>\n" +
+				"  <symbol> } </symbol>\n" +
+				"  <keyword> else </keyword>\n" +
+				"  <symbol> { </symbol>\n" +
+				"  <statements>\n" +
+				"    <letStatement>\n" +
+				"      <keyword> let </keyword>\n" +
+				"      <identifier> b </identifier>\n" +
+				"      <symbol> = </symbol>\n" +
+				"      <expression>\n" +
+				"        <term>\n" +
+				"          <identifier> a </identifier>\n" +
+				"        </term>\n" +
+				"      </expression>\n" +
+				"      <symbol> ; </symbol>\n" +
+				"    </letStatement>\n" +
+				"  </statements>\n" +
+				"  <symbol> } </symbol>\n" +
+				"</ifStatement>\n",
+			false, []Token{
+				{TkKeyWord, "if"},
+				{TkSymbol, "("},
+				{TkKeyWord, "true"},
+				{TkSymbol, ")"},
+				{TkSymbol, "{"},
+				{TkKeyWord, "let"},
+				{TkIdentifier, "a"},
+				{TkSymbol, "="},
+				{TkIdentifier, "b"},
+				{TkSymbol, ";"},
+				{TkSymbol, "}"},
+				{TkKeyWord, "else"},
+				{TkSymbol, "{"},
+				{TkKeyWord, "let"},
+				{TkIdentifier, "b"},
+				{TkSymbol, "="},
+				{TkIdentifier, "a"},
+				{TkSymbol, ";"},
+				{TkSymbol, "}"},
+			}},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileIf()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
+
+}
