@@ -3,6 +3,8 @@ package compiler
 import (
 	"fmt"
 	"strings"
+
+	"github.com/juntaki/pp"
 )
 
 type ErrCompileFailed struct {
@@ -172,6 +174,7 @@ func (c *CompilationEngine) compileClass() (*Node, error) {
 
 	for {
 		child, err = c.compileSubroutine()
+		fmt.Println(err)
 		if isTargetFound(err) {
 			return nil, err
 		} else if err != nil {
@@ -218,9 +221,15 @@ func (c *CompilationEngine) compileClassVarDec() (*Node, error) {
 }
 
 // let, if, while, do, return
-func (c *CompilationEngine) compileStatements() (*Node, error) {
+func (c *CompilationEngine) compileStatements() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
 	var child interface{}
-	var err error
 	node := Node{structureTag: StrStatements, children: []interface{}{}}
 
 	for {
@@ -229,7 +238,6 @@ func (c *CompilationEngine) compileStatements() (*Node, error) {
 		if isTargetFound(err) {
 			return nil, targetFound(err)
 		} else if err != nil {
-			c.rollbackNextToken()
 		} else {
 			node.children = append(node.children, child)
 			continue
@@ -243,7 +251,6 @@ func (c *CompilationEngine) compileStatements() (*Node, error) {
 		if isTargetFound(err) {
 			return nil, targetFound(err)
 		} else if err != nil {
-			c.rollbackNextToken()
 		} else {
 			node.children = append(node.children, child)
 			continue
@@ -321,9 +328,15 @@ func (c *CompilationEngine) compileLet() (_ *Node, err error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileDo() (*Node, error) {
+func (c *CompilationEngine) compileDo() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
 	var child interface{}
-	var err error
 	node := Node{structureTag: StrDoStatement, children: []interface{}{}}
 
 	child, err = c.processKeyword(KwDo)
@@ -363,6 +376,8 @@ func (c *CompilationEngine) compileDo() (*Node, error) {
 	child, err = c.compileExpressionList()
 	if isTargetFound(err) {
 		return nil, targetFound(err)
+	} else if err != nil {
+		return nil, targetNotFound(err)
 	} else {
 		node.children = append(node.children, child)
 	}
@@ -373,14 +388,17 @@ func (c *CompilationEngine) compileDo() (*Node, error) {
 	}
 	node.children = append(node.children, child)
 
+	pp.Println(node)
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileExpressionList() (_ *Node, err error) {
+func (c *CompilationEngine) compileExpressionList() (retNode *Node, err error) {
 	var child interface{}
 	iTokenBack := c.iToken
 	defer func() {
 		if err != nil {
+			retNode = &Node{structureTag: StrExpressionList, children: []interface{}{}}
+			err = nil
 			c.restoreNextToken(iTokenBack)
 		}
 	}()
@@ -452,9 +470,15 @@ func (c *CompilationEngine) compileVarDec() (_ *Node, err error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileSubroutine() (*Node, error) {
+func (c *CompilationEngine) compileSubroutine() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
 	var child interface{}
-	var err error
 	node := Node{structureTag: StrSubroutineDec, children: []interface{}{}}
 
 	child, err = c.processKeyword(KwFunction, KwMethod)
@@ -502,10 +526,15 @@ func (c *CompilationEngine) compileSubroutine() (*Node, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileParameterList() (*Node, error) {
-	var child interface{}
-	var err error
+func (c *CompilationEngine) compileParameterList() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
 
+	var child interface{}
 	node := Node{structureTag: StrParameterList, children: []interface{}{}}
 
 	for {
@@ -532,10 +561,15 @@ func (c *CompilationEngine) compileParameterList() (*Node, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileSubroutineBody() (*Node, error) {
-	var child interface{}
-	var err error
+func (c *CompilationEngine) compileSubroutineBody() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
 
+	var child interface{}
 	node := Node{structureTag: StrSubroutineBody, children: []interface{}{}}
 
 	child, err = c.processSymbol("{")
@@ -549,7 +583,6 @@ func (c *CompilationEngine) compileSubroutineBody() (*Node, error) {
 		if isTargetFound(err) {
 			return nil, err
 		} else if err != nil {
-			c.rollbackNextToken()
 			break
 		}
 		node.children = append(node.children, child)
@@ -559,7 +592,6 @@ func (c *CompilationEngine) compileSubroutineBody() (*Node, error) {
 	if isTargetFound(err) {
 		return nil, err
 	} else if err != nil {
-		c.rollbackNextToken()
 	} else {
 		node.children = append(node.children, child)
 	}
@@ -612,7 +644,6 @@ func (c *CompilationEngine) compileWhile() (*Node, error) {
 // compileExpression returns compiled node tree and error.
 // expression is defined as `term (op term)*`
 func (c *CompilationEngine) compileExpression() (_ *Node, err error) {
-	var child interface{}
 	iTokenBack := c.iToken
 	defer func() {
 		if err != nil {
@@ -620,6 +651,7 @@ func (c *CompilationEngine) compileExpression() (_ *Node, err error) {
 		}
 	}()
 
+	var child interface{}
 	node := Node{structureTag: StrExpression, children: []interface{}{}}
 
 	child, err = c.compileTerm()
@@ -788,7 +820,7 @@ func (c *CompilationEngine) compileTerm() (_ *Node, err error) {
 			if isTargetFound(err) {
 				return nil, targetFound(err)
 			} else if err != nil {
-				node.children = append(node.children, &Node{structureTag: StrExpressionList})
+				return nil, targetNotFound(err)
 			} else {
 				node.children = append(node.children, child)
 			}

@@ -185,28 +185,17 @@ func TestCompileExpression(t *testing.T) {
 }
 
 func TestCompileExpressionList(t *testing.T) {
+	empty := "<expressionList>\n</expressionList>\n"
 	var tests = []struct {
-		expected string
-		err      bool
-		given    []Token
+		expected        string
+		emptyIsExpected bool
+		given           []Token
 	}{
-		{"", true, []Token{{TkSymbol, "("}}},
-		{"", true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkSymbol, ")"}, {TkSymbol, "]"}}},
-		{
-			"<expressionList>\n</expressionList>\n",
-			true,
-			[]Token{{TkKeyWord, "if"}},
-		},
-		{
-			"",
-			true,
-			[]Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "a"}},
-		},
-		{
-			"<expressionList>\n</expressionList>\n",
-			true,
-			[]Token{},
-		},
+		{empty, true, []Token{{TkSymbol, "("}}},
+		{empty, true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkSymbol, ")"}, {TkSymbol, "]"}}},
+		{empty, true, []Token{{TkKeyWord, "if"}}},
+		{empty, true, []Token{{TkIdentifier, "b"}, {TkSymbol, "["}, {TkIdentifier, "a"}}},
+		{empty, true, []Token{}},
 		{
 			"<expressionList>\n" +
 				"  <expression>\n" +
@@ -216,6 +205,22 @@ func TestCompileExpressionList(t *testing.T) {
 				"  </expression>\n" +
 				"</expressionList>\n",
 			false, []Token{{TkIntConst, "2"}},
+		},
+		{
+			"<expressionList>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <integerConstant> 2 </integerConstant>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> , </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <integerConstant> 3 </integerConstant>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"</expressionList>\n",
+			false, []Token{{TkIntConst, "2"}, {TkSymbol, ","}, {TkIntConst, "3"}},
 		},
 		{"<expressionList>\n" +
 			"  <expression>\n" +
@@ -245,12 +250,10 @@ func TestCompileExpressionList(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			ce := NewCompilationEngine(tt.given)
 			tree, err := ce.compileExpressionList()
-			if tt.err {
-				require.Error(t, err)
+			if tt.emptyIsExpected {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
 				assert.Equal(t, 0, ce.iToken)
-				if len(tt.given) > 0 {
-					assert.Equal(t, &tt.given[0], ce.nextToken())
-				}
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, tree.ToString(""))
