@@ -2,8 +2,11 @@ package compiler
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,13 +15,13 @@ func TestCompilationEngine(t *testing.T) {
 	var tests = []struct {
 		name string
 	}{
-		// {"./test/Square/Main.jack"},
-		// {"./test/Square/Square.jack"},
-		// {"./test/Square/SquareGame.jack"},
-		// {"./test/ArrayTest/Main.jack"},
+		{"./test/Square/Main.jack"},
+		{"./test/Square/Square.jack"},
+		{"./test/Square/SquareGame.jack"},
+		{"./test/ArrayTest/Main.jack"},
 		{"./test/ExpressionLessSquare/Main.jack"},
-		// {"./test/ExpressionLessSquare/Square.jack"},
-		// {"./test/ExpressionLessSquare/SquareGame.jack"},
+		{"./test/ExpressionLessSquare/Square.jack"},
+		{"./test/ExpressionLessSquare/SquareGame.jack"},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -30,7 +33,15 @@ func TestCompilationEngine(t *testing.T) {
 
 			tree, err := ce.compileClass()
 			require.NoError(t, err)
-			fmt.Println(tree.ToString(""))
+			actual := tree.ToString("")
+
+			expectedXml := strings.TrimSuffix(tt.name, ".jack") + ".xml"
+			expectedBytes, err := os.ReadFile(expectedXml)
+			expected := strings.ReplaceAll(string(expectedBytes), "\r", "")
+			require.NoError(t, err)
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Error(diff)
+			}
 		})
 	}
 }

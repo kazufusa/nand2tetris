@@ -3,8 +3,6 @@ package compiler
 import (
 	"fmt"
 	"strings"
-
-	"github.com/juntaki/pp"
 )
 
 type ErrCompileFailed struct {
@@ -134,29 +132,35 @@ func (c *CompilationEngine) rollbackNextToken() {
 // - static variable declarations ( multiple )
 // - subroutine declarations
 // - "}"
-func (c *CompilationEngine) compileClass() (*Node, error) {
-	token := c.nextToken()
-	if token.tokenType != TkKeyWord ||
-		KeyWordTag(token.value) != KwClass {
-		return nil, NewErrCompileFailed(token, string(KwClass))
-	}
-
-	node := Node{structureTag: StrClass, children: []interface{}{token}}
+func (c *CompilationEngine) compileClass() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
 
 	var child interface{}
-	var err error
+	node := Node{structureTag: StrClass, children: []interface{}{}}
+
+	// class
+	child, err = c.processKeyword(KwClass)
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
 
 	// identifier
 	child, err = c.processIdentifier()
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
 	// {
 	child, err = c.processSymbol("{")
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
@@ -166,7 +170,6 @@ func (c *CompilationEngine) compileClass() (*Node, error) {
 		if isTargetFound(err) {
 			return nil, err
 		} else if err != nil {
-			c.rollbackNextToken()
 			break
 		}
 		node.children = append(node.children, child)
@@ -174,15 +177,20 @@ func (c *CompilationEngine) compileClass() (*Node, error) {
 
 	for {
 		child, err = c.compileSubroutine()
-		fmt.Println(err)
 		if isTargetFound(err) {
 			return nil, err
 		} else if err != nil {
-			c.rollbackNextToken()
 			break
 		}
 		node.children = append(node.children, child)
 	}
+
+	// }
+	child, err = c.processSymbol("}")
+	if err != nil {
+		return nil, targetFound(err)
+	}
+	node.children = append(node.children, child)
 
 	return &node, nil
 }
@@ -438,7 +446,12 @@ func (c *CompilationEngine) compileDo() (_ *Node, err error) {
 	}
 	node.children = append(node.children, child)
 
-	pp.Println(node)
+	child, err = c.processSymbol(";")
+	if err != nil {
+		return nil, targetFound(err)
+	}
+	node.children = append(node.children, child)
+
 	return &node, nil
 }
 
@@ -671,11 +684,11 @@ func (c *CompilationEngine) compileSubroutineBody() (_ *Node, err error) {
 		node.children = append(node.children, child)
 	}
 
-	// child, err = c.processSymbol("}")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// node.children = append(node.children, child)
+	child, err = c.processSymbol("}")
+	if err != nil {
+		return nil, err
+	}
+	node.children = append(node.children, child)
 
 	return &node, nil
 }
