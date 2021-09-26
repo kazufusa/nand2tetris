@@ -482,6 +482,7 @@ func (c *CompilationEngine) compileExpressionList() (retNode *Node, err error) {
 	return &node, nil
 }
 
+// 'var' type varName (, varName)* ';'
 func (c *CompilationEngine) compileVarDec() (_ *Node, err error) {
 	iTokenBack := c.iToken
 	defer func() {
@@ -493,23 +494,47 @@ func (c *CompilationEngine) compileVarDec() (_ *Node, err error) {
 	var child interface{}
 	node := Node{structureTag: StrVarDec, children: []interface{}{}}
 
+	// 'var'
 	child, err = c.processKeyword(KwVar)
 	if err != nil {
 		return nil, targetNotFound(err)
 	}
 	node.children = append(node.children, child)
 
+	// type (int, char, boolean)
+	child, err = c.processKeyword(KwInt, KwChar, KwBoolean)
+	if err != nil {
+		c.rollbackNextToken()
+		child, err = c.processIdentifier()
+		if err != nil {
+			return nil, targetFound(err)
+		}
+	}
+	node.children = append(node.children, child)
+
+	// varName
 	child, err = c.processIdentifier()
 	if err != nil {
 		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
-	child, err = c.processIdentifier()
-	if err != nil {
-		return nil, targetFound(err)
+	for {
+		// ,
+		child, err = c.processSymbol(",")
+		if err != nil {
+			c.rollbackNextToken()
+			break
+		}
+		node.children = append(node.children, child)
+
+		// varName
+		child, err = c.processIdentifier()
+		if err != nil {
+			return nil, targetFound(err)
+		}
+		node.children = append(node.children, child)
 	}
-	node.children = append(node.children, child)
 
 	child, err = c.processSymbol(";")
 	if err != nil {

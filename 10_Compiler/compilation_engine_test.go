@@ -291,6 +291,28 @@ func TestCompileVarDec(t *testing.T) {
 				{TkSymbol, ";"},
 			},
 		},
+		{
+			"<varDec>\n" +
+				"  <keyword> var </keyword>\n" +
+				"  <keyword> int </keyword>\n" +
+				"  <identifier> testName1 </identifier>\n" +
+				"  <symbol> , </symbol>\n" +
+				"  <identifier> testName2 </identifier>\n" +
+				"  <symbol> , </symbol>\n" +
+				"  <identifier> testName3 </identifier>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</varDec>\n",
+			false, []Token{
+				{TkKeyWord, "var"},
+				{TkKeyWord, "int"},
+				{TkIdentifier, "testName1"},
+				{TkSymbol, ","},
+				{TkIdentifier, "testName2"},
+				{TkSymbol, ","},
+				{TkIdentifier, "testName3"},
+				{TkSymbol, ";"},
+			},
+		},
 	}
 	for i, tt := range tests {
 		tt := tt
