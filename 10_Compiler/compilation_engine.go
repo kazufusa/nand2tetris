@@ -237,27 +237,46 @@ func (c *CompilationEngine) compileStatements() (_ *Node, err error) {
 		child, err = c.compileLet()
 		if isTargetFound(err) {
 			return nil, targetFound(err)
-		} else if err != nil {
-		} else {
+		} else if err == nil {
 			node.children = append(node.children, child)
 			continue
 		}
 
-		// TODO if statement
+		// if statement
+		child, err = c.compileIf()
+		if isTargetFound(err) {
+			return nil, targetFound(err)
+		} else if err == nil {
+			node.children = append(node.children, child)
+			continue
+		}
 
-		// TODO while statement
+		// while statement
+		child, err = c.compileIf()
+		if isTargetFound(err) {
+			return nil, targetFound(err)
+		} else if err == nil {
+			node.children = append(node.children, child)
+			continue
+		}
 
 		// do statement
 		child, err = c.compileDo()
 		if isTargetFound(err) {
 			return nil, targetFound(err)
-		} else if err != nil {
-		} else {
+		} else if err == nil {
 			node.children = append(node.children, child)
 			continue
 		}
 
-		// TODO return statement
+		// return statement
+		child, err = c.compileReturn()
+		if isTargetFound(err) {
+			return nil, targetFound(err)
+		} else if err == nil {
+			node.children = append(node.children, child)
+			break
+		}
 		break
 	}
 
