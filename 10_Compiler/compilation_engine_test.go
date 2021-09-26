@@ -615,5 +615,66 @@ func TestCompileReturn(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestCompileWhile(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{{TkSymbol, "while"}}},
+		{"", true, []Token{
+			{TkKeyWord, "return"},
+			{TkSymbol, ";"},
+		}},
+		{"", true, []Token{
+			{TkKeyWord, "while"},
+			{TkSymbol, "("},
+			{TkSymbol, ")"},
+			{TkSymbol, "{"},
+			{TkSymbol, "}"},
+		}},
+		{
+			"<whileStatement>\n" +
+				"  <keyword> while </keyword>\n" +
+				"  <symbol> ( </symbol>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <keyword> true </keyword>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ) </symbol>\n" +
+				"  <symbol> { </symbol>\n" +
+				"  <statements>\n" +
+				"  </statements>\n" +
+				"  <symbol> } </symbol>\n" +
+				"</whileStatement>\n",
+			false, []Token{
+				{TkKeyWord, "while"},
+				{TkSymbol, "("},
+				{TkKeyWord, "true"},
+				{TkSymbol, ")"},
+				{TkSymbol, "{"},
+				{TkSymbol, "}"},
+			}},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileWhile()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
 }

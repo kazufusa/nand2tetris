@@ -244,6 +244,7 @@ func (c *CompilationEngine) compileStatements() (_ *Node, err error) {
 		}
 
 		// TODO if statement
+
 		// TODO while statement
 
 		// do statement
@@ -722,36 +723,56 @@ func (c *CompilationEngine) compileReturn() (_ *Node, err error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileWhile() (*Node, error) {
-	token := c.nextToken()
-	if token.tokenType != TkKeyWord ||
-		KeyWordTag(token.value) != KwWhile {
-		return nil, NewErrCompileFailed(token, string(KwWhile))
-	}
+func (c *CompilationEngine) compileWhile() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
 
-	node := Node{structureTag: StrClass, children: []interface{}{token}}
+	var child interface{}
+	node := Node{structureTag: StrWhileStatement, children: []interface{}{}}
 
-	child, err := c.processSymbol("(")
+	child, err = c.processKeyword(KwWhile)
 	if err != nil {
-		return nil, err
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.processSymbol("(")
+	if err != nil {
+		return nil, targetFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.compileExpression()
+	if err != nil {
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
 	child, err = c.processSymbol(")")
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
 	child, err = c.processSymbol("{")
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
-	child, err = c.processSymbol("{")
+	child, err = c.compileStatements()
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.processSymbol("}")
+	if err != nil {
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 
