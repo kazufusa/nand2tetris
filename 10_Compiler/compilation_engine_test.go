@@ -537,3 +537,83 @@ func TestCompileIf(t *testing.T) {
 	}
 
 }
+
+func TestCompileReturn(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{{TkSymbol, "return"}}},
+		{"", true, []Token{
+			{TkKeyWord, "if"},
+			{TkSymbol, "("},
+			{TkSymbol, ")"},
+			{TkSymbol, "{"},
+			{TkSymbol, "}"},
+		}},
+		{
+			"<returnStatement>\n" +
+				"  <keyword> return </keyword>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</returnStatement>\n",
+			false, []Token{
+				{TkKeyWord, "return"},
+				{TkSymbol, ";"},
+			}},
+		{
+			"<returnStatement>\n" +
+				"  <keyword> return </keyword>\n" +
+				"  <expression>\n" +
+				"    <term>\n" +
+				"      <symbol> ( </symbol>\n" +
+				"      <expression>\n" +
+				"        <term>\n" +
+				"          <identifier> a </identifier>\n" +
+				"        </term>\n" +
+				"        <symbol> + </symbol>\n" +
+				"        <term>\n" +
+				"          <identifier> b </identifier>\n" +
+				"          <symbol> ( </symbol>\n" +
+				"          <expressionList>\n" +
+				"          </expressionList>\n" +
+				"          <symbol> ) </symbol>\n" +
+				"        </term>\n" +
+				"      </expression>\n" +
+				"      <symbol> ) </symbol>\n" +
+				"    </term>\n" +
+				"  </expression>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</returnStatement>\n",
+			false, []Token{
+				{TkKeyWord, "return"},
+				{TkSymbol, "("},
+				{TkIdentifier, "a"},
+				{TkSymbol, "+"},
+				{TkIdentifier, "b"},
+				{TkSymbol, "("},
+				{TkSymbol, ")"},
+				{TkSymbol, ")"},
+				{TkSymbol, ";"},
+			}},
+	}
+	for i, tt := range tests {
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileReturn()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
+
+}

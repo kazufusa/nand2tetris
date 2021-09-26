@@ -88,10 +88,10 @@ type ICompilationEngine interface {
 	compileVarDec() (*Node, error)
 	compileStatements() (*Node, error)
 	compileLet() (*Node, error)
-	// compileIf() (*Node, error)
+	compileIf() (*Node, error)
 	compileWhile() (*Node, error)
 	compileDo() (*Node, error)
-	// compileReturn() (*Node, error)
+	compileReturn() (*Node, error)
 	compileExpression() (*Node, error)
 	compileTerm() (*Node, error)
 	compileExpressionList() (*Node, error)
@@ -687,6 +687,37 @@ func (c *CompilationEngine) compileIf() (_ *Node, err error) {
 		}
 		node.children = append(node.children, child)
 	}
+
+	return &node, nil
+}
+
+func (c *CompilationEngine) compileReturn() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
+
+	var child interface{}
+	node := Node{structureTag: StrReturnStatement, children: []interface{}{}}
+
+	child, err = c.processKeyword(KwReturn)
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
+
+	child, err = c.compileExpression()
+	if err == nil {
+		node.children = append(node.children, child)
+	}
+
+	child, err = c.processSymbol(";")
+	if err != nil {
+		return nil, targetNotFound(err)
+	}
+	node.children = append(node.children, child)
 
 	return &node, nil
 }
