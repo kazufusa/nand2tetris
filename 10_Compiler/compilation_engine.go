@@ -187,33 +187,63 @@ func (c *CompilationEngine) compileClass() (*Node, error) {
 	return &node, nil
 }
 
-func (c *CompilationEngine) compileClassVarDec() (*Node, error) {
-	var child interface{}
-	var err error
+func (c *CompilationEngine) compileClassVarDec() (_ *Node, err error) {
+	iTokenBack := c.iToken
+	defer func() {
+		if err != nil {
+			c.restoreNextToken(iTokenBack)
+		}
+	}()
 
+	var child interface{}
 	node := Node{structureTag: StrClassVarDec, children: []interface{}{}}
 
+	// static|field
 	child, err = c.processKeyword(KwStatic, KwField)
 	if err != nil {
 		return nil, err
 	}
 	node.children = append(node.children, child)
 
+	// type
+	// int, char, boolean,
 	child, err = c.processKeyword(KwBoolean, KwChar, KwInt)
 	if err != nil {
-		return nil, err
+		c.rollbackNextToken()
+
+		// or className
+		child, err = c.processIdentifier()
+		if err != nil {
+			return nil, targetFound(err)
+		}
 	}
 	node.children = append(node.children, child)
 
+	// varName
 	child, err = c.processIdentifier()
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
+
+	for {
+		child, err = c.processSymbol(",")
+		if err != nil {
+			c.rollbackNextToken()
+			break
+		}
+		node.children = append(node.children, child)
+
+		child, err = c.processIdentifier()
+		if err != nil {
+			return nil, targetFound(err)
+		}
+		node.children = append(node.children, child)
+	}
 
 	child, err = c.processSymbol(";")
 	if err != nil {
-		return nil, err
+		return nil, targetFound(err)
 	}
 	node.children = append(node.children, child)
 

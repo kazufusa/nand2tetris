@@ -678,3 +678,84 @@ func TestCompileWhile(t *testing.T) {
 		})
 	}
 }
+
+func TestCompileClassVarDec(t *testing.T) {
+	var tests = []struct {
+		expected string
+		err      bool
+		given    []Token
+	}{
+		{"", true, []Token{{TkSymbol, "("}}},
+		{
+			"<classVarDec>\n" +
+				"  <keyword> field </keyword>\n" +
+				"  <identifier> testType </identifier>\n" +
+				"  <identifier> testName </identifier>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</classVarDec>\n",
+			false, []Token{
+				{TkKeyWord, "field"},
+				{TkIdentifier, "testType"},
+				{TkIdentifier, "testName"},
+				{TkSymbol, ";"},
+			},
+		},
+		{
+			"<classVarDec>\n" +
+				"  <keyword> static </keyword>\n" +
+				"  <identifier> testType </identifier>\n" +
+				"  <identifier> testName </identifier>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</classVarDec>\n",
+			false, []Token{
+				{TkKeyWord, "static"},
+				{TkIdentifier, "testType"},
+				{TkIdentifier, "testName"},
+				{TkSymbol, ";"},
+			},
+		},
+		{
+			"<classVarDec>\n" +
+				"  <keyword> field </keyword>\n" +
+				"  <keyword> int </keyword>\n" +
+				"  <identifier> testName1 </identifier>\n" +
+				"  <symbol> , </symbol>\n" +
+				"  <identifier> testName2 </identifier>\n" +
+				"  <symbol> , </symbol>\n" +
+				"  <identifier> testName3 </identifier>\n" +
+				"  <symbol> ; </symbol>\n" +
+				"</classVarDec>\n",
+			false, []Token{
+				{TkKeyWord, "field"},
+				{TkKeyWord, "int"},
+				{TkIdentifier, "testName1"},
+				{TkSymbol, ","},
+				{TkIdentifier, "testName2"},
+				{TkSymbol, ","},
+				{TkIdentifier, "testName3"},
+				{TkSymbol, ";"},
+			},
+		},
+	}
+	for i, tt := range tests {
+		if i != 3 {
+			continue
+		}
+		tt := tt
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			ce := NewCompilationEngine(tt.given)
+			tree, err := ce.compileClassVarDec()
+			if tt.err {
+				require.Error(t, err)
+				assert.Equal(t, 0, ce.iToken)
+				if len(tt.given) > 0 {
+					assert.Equal(t, &tt.given[0], ce.nextToken())
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, tree.ToString(""))
+				assert.Nil(t, ce.nextToken())
+			}
+		})
+	}
+}
