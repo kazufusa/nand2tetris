@@ -290,7 +290,7 @@ func (c *CompilationEngine) compileStatements() (_ *Node, err error) {
 		}
 
 		// while statement
-		child, err = c.compileIf()
+		child, err = c.compileWhile()
 		if isTargetFound(err) {
 			return nil, targetFound(err)
 		} else if err == nil {
@@ -569,7 +569,7 @@ func (c *CompilationEngine) compileSubroutine() (_ *Node, err error) {
 	var child interface{}
 	node := Node{structureTag: StrSubroutineDec, children: []interface{}{}}
 
-	child, err = c.processKeyword(KwFunction, KwMethod)
+	child, err = c.processKeyword(KwConstructor, KwFunction, KwMethod)
 	if err != nil {
 		return nil, targetNotFound(err)
 	}
@@ -577,7 +577,11 @@ func (c *CompilationEngine) compileSubroutine() (_ *Node, err error) {
 
 	child, err = c.processKeyword(KwInt, KwBoolean, KwChar, KwVoid)
 	if err != nil {
-		return nil, targetFound(err)
+		c.rollbackNextToken()
+		child, err = c.processIdentifier()
+		if err != nil {
+			return nil, targetFound(err)
+		}
 	}
 	node.children = append(node.children, child)
 
@@ -752,7 +756,9 @@ func (c *CompilationEngine) compileIf() (_ *Node, err error) {
 
 	// else
 	child, err = c.processKeyword(KwElse)
-	if err == nil {
+	if err != nil {
+		c.rollbackNextToken()
+	} else {
 		node.children = append(node.children, child)
 
 		child, err = c.processSymbol("{")
