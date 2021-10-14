@@ -52,3 +52,31 @@
 > Suppose that we are parsing this expression and the current token is one of the identifiers y, arr, p, count, or Math.
 > In each one of these cases, we know that we have a term that begins with an identifier, but we don't known which parsing possibility to follow next.
 > That's the bad news; the good news is that a single lookahead to the next token is all that we need to settle the dilemma.
+
+# Compiler II
+
+## 11.1.1 Handling Variables
+
+The followings are the types of variables.
+
+- static
+    - Class variable
+- field
+    - Class field variable
+- local
+    - variables declared in Subroutine
+- argument
+    - arguments of Subroutine
+
+> All we have to do now is map Jack static variables on static 0, static 1, static 2, ...; field variables on this 0, this 1, ...; local variables on local 0, local 1, ...; and argument variables on argument 0, argument 1, ....
+> The subsequent mapping of the virtual memory seguments on the host RAM, as well as the intricate management of their run-time life cycles, are completely taken care of by VM implementation.
+> The only thing required from the compiler is mapping the high-level variables onto the virtual memory segments.
+> An important feature of high-level languages is separate namespaces:
+> Jack compilers can realize the scope abstraction by managing two separate symbol tables,
+> The scopes are nested, with inner scopes hiding outer ones.
+
+### Handling variable declarations
+
+> When the Jack compiler starts compiling a class declaration, it creates a class-level symbol table and a subroutine level symbol table.
+> When the Jack compiler starts compiling a subroutine (constructor, method, or function) declaration, it resets the subroutine-level symbol table.
+> If the subroutine is a method, the compiler adds the row <this, className, arg, 0> to the subroutine-level symbol table (this initialization detail is explained in section 11.1.5.2 and can be ignored til then).
